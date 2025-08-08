@@ -1,8 +1,16 @@
-import { NextConfig } from "next"
-import createNextIntlPlugin from "next-intl/plugin"
-import withPWA from "next-pwa"
+import withPWAInit from 'next-pwa';
+import createNextIntlPlugin from 'next-intl/plugin';
 
-const nextConfig: NextConfig = {}
+const withPWA = withPWAInit({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+});
 
-const withNextIntl = createNextIntlPlugin()
-export default withPWA()(withNextIntl(nextConfig))
+const withNextIntl = createNextIntlPlugin();
+
+export default withPWA(
+  withNextIntl({
+    reactStrictMode: false,
+  })
+);
