@@ -1,6 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
 import { useEffect, useState } from "react";
+
+type Breach = { name: string; domain: string; date: string; description: string };
 
 export function BreachDetailsModal({ open, onOpenChange, hash, count }: {
   open: boolean;
@@ -8,7 +11,7 @@ export function BreachDetailsModal({ open, onOpenChange, hash, count }: {
   hash: string;
   count: number;
 }) {
-  const [breaches, setBreaches] = useState<any[]>([]);
+  const [breaches, setBreaches] = useState<Breach[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

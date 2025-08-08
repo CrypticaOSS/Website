@@ -4,6 +4,30 @@
 
 import { checkPasswordBreach } from "@/lib/breaches";
 import { getPasswordStrength, getStrengthInfo, PasswordStrength } from "@/lib/password";
+
+// Crack time estimation utility
+function estimateCrackTime(entropy: number): { time: string, scenario: string }[] {
+  // Entropy in bits, guesses = 2^entropy
+  const guesses = Math.pow(2, entropy);
+  // Guesses per second for different attack scenarios
+  const scenarios = [
+    { label: "Offline fast attack (10B/sec)", rate: 1e10 },
+    { label: "Offline slow attack (100K/sec)", rate: 1e5 },
+    { label: "Online attack (100/sec)", rate: 100 },
+    { label: "Online throttled (1/sec)", rate: 1 },
+  ];
+  return scenarios.map(s => {
+    const seconds = guesses / s.rate;
+    let time;
+    if (seconds < 60) time = `${seconds.toFixed(2)} seconds`;
+    else if (seconds < 3600) time = `${(seconds/60).toFixed(2)} minutes`;
+    else if (seconds < 86400) time = `${(seconds/3600).toFixed(2)} hours`;
+    else if (seconds < 31536000) time = `${(seconds/86400).toFixed(2)} days`;
+    else if (seconds < 31536000*100) time = `${(seconds/31536000).toFixed(2)} years`;
+    else time = `centuries+`;
+    return { time, scenario: s.label };
+  });
+}
 import { useState, useRef, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,9 +49,11 @@ function sha1HexSync(str: string): string {
   return hash.toString(16);
 }
 
+
+type BreachHistoryItem = { hash: string; count: number; checked: string };
 const HISTORY_KEY = "breach-history-v1";
 
-function loadHistory() {
+function loadHistory(): BreachHistoryItem[] {
   if (typeof window === "undefined") return [];
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
@@ -36,7 +62,7 @@ function loadHistory() {
   }
 }
 
-function saveHistory(history: any[]) {
+function saveHistory(history: BreachHistoryItem[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
@@ -70,7 +96,7 @@ export default function BreachesTool() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [autoClear, setAutoClear] = useState(true);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<BreachHistoryItem[]>([]);
   const [showCopied, setShowCopied] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [rateLimit, setRateLimit] = useState(false);
@@ -102,8 +128,8 @@ export default function BreachesTool() {
       setHistory(newHistory);
       saveHistory(newHistory);
       if (autoClear) setPassword("");
-    } catch (err: any) {
-      if (err?.message?.includes("rate limit")) setRateLimit(true);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message?.includes("rate limit")) setRateLimit(true);
       setError("Failed to check password. Try again later.");
     } finally {
       setLoading(false);
@@ -192,6 +218,17 @@ export default function BreachesTool() {
               </div>
               <span className="text-xs font-medium min-w-[70px]">{getStrengthLabel(strength)}</span>
             </div>
+            {/* Crack time estimator */}
+            {password && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                <div className="font-semibold mb-1">Estimated crack time:</div>
+                <ul className="list-disc ml-4">
+                  {estimateCrackTime(analysis.entropy).map((row, i) => (
+                    <li key={i}><span className="font-mono text-foreground">{row.time}</span> <span className="text-muted-foreground">({row.scenario})</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
               <div>Length: <span className="font-semibold text-foreground">{analysis.length}</span></div>
               <div>Entropy: <span className="font-semibold text-foreground">{analysis.entropy} bits</span></div>
