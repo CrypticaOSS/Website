@@ -27,8 +27,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Cryptica"
-    template: "%s | Cryptica",
+    default: "Cryptica",
+    template: "%s | Cryptica"
   },
   description: "Life’s messy. Your passwords don’t have to be.",
   applicationName: "Cryptica",
