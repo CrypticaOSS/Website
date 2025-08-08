@@ -1,5 +1,6 @@
 {
   "name": "@cryptica/website",
+  "description": "Life’s messy. Your passwords don’t have to be.",
   "version": "0.1.0",
   "private": true,
   "scripts": {

@@ -494,12 +494,12 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">{t("version")}</h3>
-                <p>Passliss v{version}</p>
+                <p>Cryptica v{version}</p>
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">{t("repository")}</h3>
                 <a
-                  href="https://github.com/Leo-Corporation/Passliss"
+                  href="https://github.com/CrypticaOSS/Website"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary flex items-center hover:underline"
@@ -521,8 +521,7 @@ export default function SettingsPage() {
                   Fluent System Icons - MIT License - © 2020 Microsoft
                   Corporation
                   <br></br>
-                  Passliss - MIT License - © 2021-{new Date().getFullYear()}{" "}
-                  Léo Corporation
+                  Cryptica - MIT License - © new Date().getFullYear()}{" "} ByteBrush Studios
                 </p>
               </div>
             </CardContent>
