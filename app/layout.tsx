@@ -26,35 +26,55 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Cryptica",
-  description:
-    "Life’s messy. Your passwords don’t have to be.",
-  twitter: {
-    card: "summary_large_image",
-    title: "Cryptica",
-    description:
-      "Life’s messy. Your passwords don’t have to be.",
-    creator: "@CodeMeAPixel",
-    images: [
-      {
-        url: "/images/social.png",
-        alt: "Cryptica",
-      },
-    ],
+  title: {
+    default: "Cryptica"
+    template: "%s | Cryptica",
   },
+  description: "Life’s messy. Your passwords don’t have to be.",
+  applicationName: "Cryptica",
+  metadataBase: new URL("https://crypticapp.org"),
   openGraph: {
-    title: "Cryptica",
-    description:
-      "Life’s messy. Your passwords don’t have to be.",
-    url: "https://crypticapp.org",
     siteName: "Cryptica",
-    images: [
-      {
-        url: "/images/social.png",
-        alt: "Cryptica",
-      },
-    ],
+    description: "Life’s messy. Your passwords don’t have to be.",
+    images: ["/images/social.png"],
+    creators: ["@crypticaapp", "@codemeapixel"],
+    locale: "en-US",
+    url: "https://crypticapp.org"
   },
+  twitter: {
+    title: "Cryptica",
+    description: "Life’s messy. Your passwords don’t have to be.",
+    images: "/images/social.png",
+    creator: "@CodeMeAPixel",
+    card: "summary_large_image",
+    site: "https://crypticapp.org"
+  },
+  appleWebApp: {
+    statusBarStyle: "black-translucent",
+    title: "Cryptica",
+  },
+  others: {
+    "mobile-web-app-capable": "yes"
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/images/icons/icon-72x72.png",
+    apple: "/images/icons/icon-96x96.png"
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": "-1",
+      "max-image-preview": "large",
+      "max-video-preview": "-1"
+    }
+  }
 }
 export default async function RootLayout({
   children,
