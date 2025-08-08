@@ -232,5 +232,14 @@
   "ai-prompt-tooltip": "Click here to generate a random prompt",
   "learn-more": "Learn more",
   "get-started": "Get started",
-  "go-to": "Go to {page}"
+  "go-to": "Go to {page}",
+  "breaches": "Breaches",
+  "breaches-desc": "Check if your password has been found in public data breaches.",
+  "breaches-tool-title": "Password Breach Checker",
+  "breaches-tool-placeholder": "Enter password to check...",
+  "breaches-tool-check": "Check Breach",
+  "breaches-tool-loading": "Checking...",
+  "breaches-tool-found": "This password has been found in {count} breaches!",
+  "breaches-tool-not-found": "This password was NOT found in any known breaches.",
+  "breaches-tool-error": "Failed to check password. Try again later."
 }
