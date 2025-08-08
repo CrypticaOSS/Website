@@ -154,58 +154,6 @@ export default function SettingsPage() {
                     />
                     <p className="m-2 font-bold">{t("system")}</p>
                   </div>
-                  <div
-                    onClick={() => setTheme("aurora")}
-                    className={`flex cursor-pointer items-center space-x-2 overflow-hidden rounded-lg border-2 bg-slate-100 pr-2 dark:bg-slate-800 ${theme === "aurora" ? "border-accent" : "border-transparent"}`}
-                  >
-                    <Image
-                      src="/bar-aurora.svg"
-                      height={50}
-                      width={50}
-                      alt="Aurora theme image"
-                      className="object-cover"
-                    />
-                    <p className="m-2 font-bold">Aurora</p>
-                  </div>
-                  <div
-                    onClick={() => setTheme("sunset")}
-                    className={`flex cursor-pointer items-center space-x-2 overflow-hidden rounded-lg border-2 bg-slate-100 pr-2 dark:bg-slate-800 ${theme === "sunset" ? "border-accent" : "border-transparent"}`}
-                  >
-                    <Image
-                      src="/bar-sunset.svg"
-                      height={50}
-                      width={50}
-                      alt="Sunset theme image"
-                      className="object-cover"
-                    />
-                    <p className="m-2 font-bold">Sunset</p>
-                  </div>
-                  <div
-                    onClick={() => setTheme("cyber")}
-                    className={`flex cursor-pointer items-center space-x-2 overflow-hidden rounded-lg border-2 bg-slate-100 pr-2 dark:bg-slate-800 ${theme === "cyber" ? "border-accent" : "border-transparent"}`}
-                  >
-                    <Image
-                      src="/bar-cyber.svg"
-                      height={50}
-                      width={50}
-                      alt="Cyber theme image"
-                      className="object-cover"
-                    />
-                    <p className="m-2 font-bold">Cyber</p>
-                  </div>
-                  <div
-                    onClick={() => setTheme("mint")}
-                    className={`flex cursor-pointer items-center space-x-2 overflow-hidden rounded-lg border-2 bg-slate-100 pr-2 dark:bg-slate-800 ${theme === "mint" ? "border-accent" : "border-transparent"}`}
-                  >
-                    <Image
-                      src="/bar-mint.svg"
-                      height={50}
-                      width={50}
-                      alt="Mint theme image"
-                      className="object-cover"
-                    />
-                    <p className="m-2 font-bold">Mint</p>
-                  </div>
                 </div>
               </div>
               <div className="flex flex-col space-y-2">
