@@ -223,15 +223,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: [docs.crypticapp.org](https://docs.crypticapp.org)
-- **Issues**: [GitHub Issues](https://github.com/your-username/cryptica-site/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/cryptica-site/discussions)
+- **Issues**: [GitHub Issues](https://github.com/CrypticaOSS/cryptica-site/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/CrypticaOSS/cryptica-site/discussions)
 - **Email**: support@crypticapp.org
 
 ## 🔗 Links
 
 - **Website**: [crypticapp.org](https://crypticapp.org)
 - **Documentation**: [docs.crypticapp.org](https://docs.crypticapp.org)
-- **GitHub**: [github.com/your-username/cryptica-site](https://github.com/your-username/cryptica-site)
+- **GitHub**: [github.com/CrypticaOSS/cryptica-site](https://github.com/CrypticaOSS/cryptica-site)
 - **Twitter**: [@crypticaapp](https://twitter.com/crypticaapp)
 
 ---
