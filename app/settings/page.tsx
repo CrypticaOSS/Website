@@ -521,7 +521,7 @@ export default function SettingsPage() {
                   Fluent System Icons - MIT License - © 2020 Microsoft
                   Corporation
                   <br></br>
-                  Cryptica - MIT License - © new Date().getFullYear()}{" "} ByteBrush Studios
+                  Cryptica - MIT License - © {new Date().getFullYear()}{" "} ByteBrush Studios
                 </p>
               </div>
             </CardContent>
