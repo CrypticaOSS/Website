@@ -53,9 +53,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Cryptica",
   },
-  others: {
-    "mobile-web-app-capable": "yes"
-  },
   formatDetection: {
     telephone: false,
   },
@@ -73,7 +70,10 @@ export const metadata: Metadata = {
       "max-snippet": -1,
       "max-video-preview": -1
     }
-  }
+  },
+  other: {
+    "mobile-web-app-capable": "yes"
+  },
 }
 export default async function RootLayout({
   children,
