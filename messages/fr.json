@@ -533,8 +533,11 @@
   "updates-desc": "Cryptica vérifie automatiquement les mises à jour lorsque vous êtes en ligne :",
   "update-process": "Processus de mise à jour",
   "update-process-desc": "Les mises à jour sont téléchargées en arrière-plan et appliquées la prochaine fois que vous lancez l'application.",
-  "check-for-updates": "Vérification manuelle",
-  "check-updates-desc": "Pour forcer la vérification des mises à jour, fermez et rouvrez l'application tout en étant connecté à Internet.",
+  "check-for-updates": "Vérifier les mises à jour",
+  "checking-updates": "Vérification...",
+  "latest-version-msg": "Vous utilisez la dernière version.",
+  "update-available-msg": "Mise à jour disponible : v{version}",
+  "view-release": "Voir la version",
   "clearing-data": "Effacement des données",
   "clearing-data-desc": "Si vous rencontrez des problèmes, vous pouvez effacer les données de l'application via les paramètres du site de votre navigateur ou les paramètres de votre appareil.",
   "uninstalling": "Désinstallation de Cryptica",
@@ -730,5 +733,6 @@
   "tech-detail-2": "Calcul avancé de l'entropie basé sur les directives du NIST",
   "tech-detail-3": "Évaluation de la force du mot de passe à l'aide de multiples facteurs, y compris la longueur, la taille de l'ensemble de caractères et la composition",
   "tech-detail-4": "Pour la génération assistée par IA : appels API sécurisés sans stockage de mot de passe",
-  "docs-back": "Retour à la documentation"
+  "docs-back": "Retour à la documentation",
+  "version-mismatch-msg": "Attention : votre version locale est plus récente que la dernière version officielle (v{version}). Cela peut indiquer un problème de version ou une modification manuelle du package.json."
 }

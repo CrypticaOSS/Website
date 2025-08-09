@@ -783,8 +783,11 @@
   "updates-desc": "Cryptica automatically checks for updates when you're online:",
   "update-process": "Update Process",
   "update-process-desc": "Updates are downloaded in the background and applied the next time you launch the app.",
-  "check-for-updates": "Manual Check",
-  "check-updates-desc": "To force-check for updates, close and reopen the app while connected to the internet.",
+  "check-for-updates": "Check for Updates",
+  "checking-updates": "Checking...",
+  "latest-version-msg": "You are using the latest version.",
+  "update-available-msg": "Update available: v{version}",
+  "view-release": "View Release",
   "clearing-data": "Clearing Data",
   "clearing-data-desc": "If you experience issues, you can clear the app data through your browser's site settings or device settings.",
   "uninstalling": "Uninstalling Cryptica",
@@ -960,5 +963,6 @@
   "continue": "Continue",
   "cancel": "Cancel",
   "ok": "Ok",
-  "today": "Today"
+  "today": "Today",
+  "version-mismatch-msg": "Warning: this version of Cryptica is newer than the latest official release (v{version}). This may indicate a version mismatch or manual changes to the package.json."
 }
