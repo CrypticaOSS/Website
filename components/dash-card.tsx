@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowRight20Regular } from "@fluentui/react-icons"
 

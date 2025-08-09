@@ -384,3 +384,6 @@ messages/soon/**
 
 i18n/soon
 i18n/soon/**
+
+ignored/
+ignored/**
