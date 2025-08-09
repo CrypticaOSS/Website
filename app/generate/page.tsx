@@ -292,46 +292,63 @@ export default function GeneratePage() {
   const { presets } = usePresets()
   return (
     <div>
-      <div className="mb-2 flex items-center space-x-2">
+      <div className="mb-4 flex items-center space-x-2">
         <LockClosed20Regular primaryFill="#0088FF" className="text-white" />
 
         <p className="ml-2 font-bold">{t("generate")}</p>
       </div>
-      <Tabs defaultValue="simple">
-        <TabsList>
-          <TabsTrigger value="simple">
-            <CheckmarkCircle20Regular />
-            <p className="font-semibold">{t("simple")}</p>
-          </TabsTrigger>
-          <TabsTrigger value="advanced">
-            <Settings20Regular className="m-0" />
-            <p className="font-semibold">{t("advanced")}</p>
-          </TabsTrigger>
-          <TabsTrigger value="ai">
-            <BrainCircuit20Regular />
-            <p className="font-semibold">{t("ai")}</p>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="simple" className="w-full max-w-5xl mx-auto">
+        <div className="mx-auto w-full max-w-2xl mb-8">
+          <TabsList className="w-full">
+            <TabsTrigger value="simple" className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-primary/20 to-purple-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <CheckmarkCircle20Regular className="h-5 w-5" />
+                <p className="font-medium">{t("simple")}</p>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-primary/20 to-red-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <Settings20Regular className="h-5 w-5" />
+                <p className="font-medium">{t("advanced")}</p>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-primary/20 to-violet-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <BrainCircuit20Regular className="h-5 w-5" />
+                <p className="font-medium">{t("ai")}</p>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent
           className="justify-center border-none data-[state=active]:flex"
           value="simple"
         >
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("simple")}</CardTitle>
-              <CardDescription>{t("simple-desc")}</CardDescription>
+          <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-xl"></div>
+            <CardHeader className="pb-4 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-blue-500 to-primary rounded-full p-1.5">
+                  <LockClosed20Regular className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl">{t("simple")}</CardTitle>
+              </div>
+              <CardDescription className="text-base">{t("simple-desc")}</CardDescription>
             </CardHeader>
             <CardContent className="w-full max-w-250 space-y-6 sm:min-w-150 xl:min-w-200">
               {/* Generated Password Display */}
               <div className="space-y-2">
-                <Label htmlFor="generated-password">{t("password")}</Label>
+                <Label htmlFor="generated-password" className="text-sm font-medium">{t("password")}</Label>
                 <div className="relative">
                   <Input
                     id="generated-password"
                     type={showPassword ? "text" : "password"}
                     value={generatedPassword}
                     readOnly
-                    className="pr-20 font-mono"
+                    className="pr-20 font-mono text-base h-12 bg-background"
                   />
                   <div className="absolute top-0 right-0 flex h-full">
                     <Button
@@ -341,9 +358,9 @@ export default function GeneratePage() {
                       className="h-full"
                     >
                       {showPassword ? (
-                        <EyeOff20Regular className="h-4 w-4" />
+                        <EyeOff20Regular className="h-5 w-5" />
                       ) : (
-                        <Eye20Regular className="h-4 w-4" />
+                        <Eye20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">
                         Toggle password visibility
@@ -356,9 +373,9 @@ export default function GeneratePage() {
                       className="h-full"
                     >
                       {copied ? (
-                        <Checkmark20Regular className="h-4 w-4" />
+                        <Checkmark20Regular className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy20Regular className="h-4 w-4" />
+                        <Copy20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">Copy to clipboard</span>
                     </Button>
@@ -367,10 +384,25 @@ export default function GeneratePage() {
               </div>
 
               {/* Strength Level Slider */}
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <Label>{t("strength")}</Label>
-                  <span className="font-medium">
+              <div className="space-y-4 py-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">{t("strength")}</Label>
+                  <span className="font-medium px-3 py-1 rounded-full text-xs" 
+                    style={{
+                      backgroundColor: 
+                        strengthLevel === 0 ? 'rgb(239, 68, 68, 0.2)' : 
+                        strengthLevel === 1 ? 'rgb(249, 115, 22, 0.2)' : 
+                        strengthLevel === 2 ? 'rgb(234, 179, 8, 0.2)' : 
+                        strengthLevel === 3 ? 'rgb(34, 197, 94, 0.2)' : 
+                        'rgb(16, 185, 129, 0.2)',
+                      color: 
+                        strengthLevel === 0 ? 'rgb(239, 68, 68)' : 
+                        strengthLevel === 1 ? 'rgb(249, 115, 22)' : 
+                        strengthLevel === 2 ? 'rgb(234, 179, 8)' : 
+                        strengthLevel === 3 ? 'rgb(34, 197, 94)' : 
+                        'rgb(16, 185, 129)'
+                    }}
+                  >
                     {
                       [
                         t("very-weak"),
@@ -390,7 +422,7 @@ export default function GeneratePage() {
                   onValueChange={(value) => setStrengthLevel(value[0])}
                   className="py-4"
                 />
-                <div className="grid grid-cols-5 text-center text-xs">
+                <div className="grid grid-cols-5 text-center text-xs text-muted-foreground">
                   <div>{t("very-weak")}</div>
                   <div>{t("weak")}</div>
                   <div>{t("moderate")}</div>
@@ -405,17 +437,17 @@ export default function GeneratePage() {
               )}
 
               {/* Password Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary dark:bg-primary-foreground rounded-md p-3">
-                  <div className="text-muted-foreground text-sm">
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="bg-secondary/50 backdrop-blur-sm dark:bg-primary-foreground/10 rounded-xl p-4 transition-all hover:bg-secondary/80 dark:hover:bg-primary-foreground/20">
+                  <div className="text-muted-foreground text-sm mb-1">
                     {t("length")}
                   </div>
-                  <div className="text-xl font-bold">
-                    {passwordStats.length} {" " + t("characters")}
+                  <div className="text-xl font-bold flex items-center gap-2">
+                    <span className="text-primary">{passwordStats.length}</span> {t("characters")}
                   </div>
                 </div>
-                <div className="bg-secondary dark:bg-primary-foreground rounded-md p-3">
-                  <div className="text-muted-foreground text-sm">
+                <div className="bg-secondary/50 backdrop-blur-sm dark:bg-primary-foreground/10 rounded-xl p-4 transition-all hover:bg-secondary/80 dark:hover:bg-primary-foreground/20">
+                  <div className="text-muted-foreground text-sm mb-1">
                     {t("strength")}
                   </div>
                   <div className="text-xl font-bold">
@@ -424,13 +456,15 @@ export default function GeneratePage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="pt-2 pb-6 relative z-10">
               <Button
                 onClick={generateSimplePassword}
-                className="flex w-full items-center gap-2"
+                className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
+                size="lg"
               >
-                <ArrowClockwise20Regular className="h-4 w-4" />
-                {t("generate-new-password")}
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500 via-primary to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <ArrowClockwise20Regular className="h-5 w-5 relative z-10" />
+                <span className="relative z-10">{t("generate-new-password")}</span>
               </Button>
             </CardFooter>
           </Card>
@@ -439,22 +473,28 @@ export default function GeneratePage() {
           className="flex justify-center border-none"
           value="advanced"
         >
-          <Card className="w-full max-w-250 sm:min-w-150 xl:min-w-200">
-            <CardHeader>
-              <CardTitle>{t("advanced")}</CardTitle>
-              <CardDescription>{t("advanced-desc")}</CardDescription>
+          <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-500/5 rounded-xl"></div>
+            <CardHeader className="pb-4 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-orange-500 to-primary rounded-full p-1.5">
+                  <Settings20Regular className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl">{t("advanced")}</CardTitle>
+              </div>
+              <CardDescription className="text-base">{t("advanced-desc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Generated Password Display */}
               <div className="space-y-2">
-                <Label htmlFor="advanced-password">{t("password")}</Label>
+                <Label htmlFor="advanced-password" className="text-sm font-medium">{t("password")}</Label>
                 <div className="relative">
                   <Input
                     id="advanced-password"
                     type={showPassword ? "text" : "password"}
                     value={generatedPassword}
                     readOnly
-                    className="pr-20 font-mono"
+                    className="pr-20 font-mono text-base h-12 bg-background"
                   />
                   <div className="absolute top-0 right-0 flex h-full">
                     <Button
@@ -464,9 +504,9 @@ export default function GeneratePage() {
                       className="h-full"
                     >
                       {showPassword ? (
-                        <EyeOff20Regular className="h-4 w-4" />
+                        <EyeOff20Regular className="h-5 w-5" />
                       ) : (
-                        <Eye20Regular className="h-4 w-4" />
+                        <Eye20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">
                         Toggle password visibility
@@ -479,9 +519,9 @@ export default function GeneratePage() {
                       className="h-full"
                     >
                       {copied ? (
-                        <Checkmark20Regular className="h-4 w-4" />
+                        <Checkmark20Regular className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy20Regular className="h-4 w-4" />
+                        <Copy20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">Copy to clipboard</span>
                     </Button>
@@ -722,15 +762,52 @@ export default function GeneratePage() {
 
               {/* Password Stats */}
               <div className="space-y-4">
-                <h3 className="font-medium">{t("strength")}</h3>
+                <h3 className="font-medium text-lg">{t("strength")}</h3>
+                
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="bg-secondary/50 backdrop-blur-sm dark:bg-primary-foreground/10 rounded-xl p-4 transition-all hover:bg-secondary/80 dark:hover:bg-primary-foreground/20">
+                    <div className="text-muted-foreground text-sm mb-1">
+                      {t("length")}
+                    </div>
+                    <div className="text-xl font-bold flex items-center gap-2">
+                      <span className="text-primary">{passwordStats.length}</span> {t("characters")}
+                    </div>
+                  </div>
+                  <div className="bg-secondary/50 backdrop-blur-sm dark:bg-primary-foreground/10 rounded-xl p-4 transition-all hover:bg-secondary/80 dark:hover:bg-primary-foreground/20">
+                    <div className="text-muted-foreground text-sm mb-1">
+                      {t("strength")}
+                    </div>
+                    <div className="text-xl font-bold">
+                      {getStrengthLabel(passwordStats.entropy)}
+                    </div>
+                  </div>
+                </div>
+                
                 <PasswordStats passwordAnalysis={passwordStats} />
 
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <Label>
+                    <Label className="text-sm font-medium">
                       {t("entropy", { entropy: passwordStats.entropy })}
                     </Label>
-                    <span>{getStrengthLabel(passwordStats.entropy)}</span>
+                    <span className="font-medium px-3 py-1 rounded-full text-xs" 
+                      style={{
+                        backgroundColor: 
+                          passwordStats.entropy < 30 ? 'rgb(239, 68, 68, 0.2)' : 
+                          passwordStats.entropy < 50 ? 'rgb(249, 115, 22, 0.2)' : 
+                          passwordStats.entropy < 70 ? 'rgb(234, 179, 8, 0.2)' : 
+                          passwordStats.entropy < 90 ? 'rgb(34, 197, 94, 0.2)' : 
+                          'rgb(16, 185, 129, 0.2)',
+                        color: 
+                          passwordStats.entropy < 30 ? 'rgb(239, 68, 68)' : 
+                          passwordStats.entropy < 50 ? 'rgb(249, 115, 22)' : 
+                          passwordStats.entropy < 70 ? 'rgb(234, 179, 8)' : 
+                          passwordStats.entropy < 90 ? 'rgb(34, 197, 94)' : 
+                          'rgb(16, 185, 129)'
+                      }}
+                    >
+                      {getStrengthLabel(passwordStats.entropy)}
+                    </span>
                   </div>
                   <Progress
                     value={Math.min(passwordStats.entropy, 128) / 1.28}
@@ -746,9 +823,14 @@ export default function GeneratePage() {
 
               {/* Multiple Passwords Display */}
               {numberOfPasswords > 1 && generatedPasswords.length > 1 && (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label>{t("results")}</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-lg font-medium">{t("results")}</Label>
+                      <div className="bg-primary/10 rounded-full px-2 py-0.5 text-xs text-primary font-medium">
+                        {generatedPasswords.length}
+                      </div>
+                    </div>
 
                     <div className="flex space-x-2">
                       <Dialog>
@@ -756,8 +838,8 @@ export default function GeneratePage() {
                           <Tooltip>
                             <TooltipTrigger>
                               <DialogTrigger>
-                                <Button variant="outline" size="sm">
-                                  <ArrowDownload20Regular />
+                                <Button variant="outline" size="sm" className="h-10 w-10">
+                                  <ArrowDownload20Regular className="h-5 w-5" />
                                 </Button>
                               </DialogTrigger>
                             </TooltipTrigger>
@@ -772,10 +854,11 @@ export default function GeneratePage() {
                               {t("export-csv-desc")}
                             </DialogDescription>
                           </DialogHeader>
-                          <p>{t("separator")}</p>
+                          <p className="text-sm font-medium mt-4">{t("separator")}</p>
                           <RadioGroup
                             defaultValue={csvSeparator}
                             onValueChange={(v) => setCsvSeparator(v)}
+                            className="mt-2 space-y-2"
                           >
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="colon" id="colon" />
@@ -790,7 +873,7 @@ export default function GeneratePage() {
                             </div>
                           </RadioGroup>
                           <Link
-                            className="flex items-center justify-center"
+                            className="flex items-center justify-center mt-6"
                             download="passwords.csv"
                             href={
                               "data:text/plain;charset=utf-8," +
@@ -803,9 +886,9 @@ export default function GeneratePage() {
                           >
                             <Button
                               variant="outline"
-                              className="m-2 flex space-x-1"
+                              className="h-12 px-6 font-medium flex items-center gap-2"
                             >
-                              <ArrowDownload16Regular />
+                              <ArrowDownload16Regular className="h-5 w-5" />
                               <span>{t("export")}</span>
                             </Button>
                           </Link>
@@ -814,32 +897,34 @@ export default function GeneratePage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="h-10 px-4 font-medium"
                         onClick={copyAllPasswords}
                       >
                         {t("copy-all")}
                       </Button>
                     </div>
                   </div>
-                  <div className="max-h-60 overflow-y-auto rounded-md border">
+                  <div className="max-h-60 overflow-y-auto rounded-xl border bg-card/30 backdrop-blur-sm">
                     <table className="w-full">
                       <tbody>
                         {generatedPasswords.map((password, index) => (
                           <tr key={index} className="border-b last:border-0">
-                            <td className="px-3 py-2 text-sm font-medium">
+                            <td className="px-4 py-3 text-sm font-medium">
                               #{index + 1}
                             </td>
-                            <td className="max-w-[300px] truncate px-3 py-2 font-mono text-sm">
+                            <td className="max-w-[300px] truncate px-4 py-3 font-mono text-sm">
                               {showPassword
                                 ? password
                                 : "•".repeat(password.length)}
                             </td>
-                            <td className="px-3 py-2 text-right">
+                            <td className="px-4 py-3 text-right">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => copyPasswordAtIndex(index)}
+                                className="h-8 w-8"
                               >
-                                <Copy20Regular className="h-3 w-3" />
+                                <Copy20Regular className="h-4 w-4" />
                                 <span className="sr-only">
                                   {t("copy-password-index", {
                                     index: index + 1,
@@ -855,31 +940,40 @@ export default function GeneratePage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
+            <CardFooter className="pt-2 pb-6 relative z-10">
               <Button
                 onClick={generateAdvancedPassword}
-                className="flex w-full items-center gap-2"
+                className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
+                size="lg"
               >
-                <ArrowClockwise20Regular className="h-4 w-4" />
-                {t("generate-new-password")}
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-orange-500 via-primary to-red-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <ArrowClockwise20Regular className="h-5 w-5 relative z-10" />
+                <span className="relative z-10">{t("generate-new-password")}</span>
               </Button>
             </CardFooter>
           </Card>
         </TabsContent>
-        <TabsContent className="flex justify-center border-none" value="ai">
+        <TabsContent
+          className="justify-center border-none data-[state=active]:flex"
+          value="ai"
+        >
           {settings.openaiKey == null ||
           settings.openaiKey == undefined ||
           (settings.openaiKey == "" && !showAI) ? (
-            <div className="flex flex-col items-center">
-              <LightbulbFilament48Regular />
-              <h2 className="text-center text-3xl font-bold">
+            <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card/50 backdrop-blur-sm max-w-md mx-auto shadow-lg border-0 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-violet-500/5 rounded-xl"></div>
+              <div className="bg-gradient-to-br from-purple-500 to-primary rounded-full p-4 relative z-10">
+                <LightbulbFilament48Regular className="h-16 w-16 text-white" />
+              </div>
+              <h2 className="text-center text-3xl font-bold relative z-10">
                 {t("welcome-ai")}
               </h2>
-              <p className="text-center">{t("welcome-ai-desc")}</p>
+              <p className="text-center text-muted-foreground max-w-sm relative z-10">{t("welcome-ai-desc")}</p>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button className="m-2 h-auto px-2 py-1">
-                    {t("set-api-key")}
+                  <Button className="mt-4 py-6 px-8 text-base font-medium relative overflow-hidden group z-10">
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    <span className="relative z-10">{t("set-api-key")}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
@@ -890,14 +984,14 @@ export default function GeneratePage() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor="AmountTxt">{t("api-key")}</Label>
+                    <div className="space-y-4">
+                      <Label htmlFor="api-key" className="text-sm font-medium">{t("api-key")}</Label>
                       <Input
                         type="password"
                         id="api-key"
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
-                        className="h-auto max-w-[80%] px-2 py-1"
+                        className="w-full h-12 bg-background"
                         defaultValue={settings.openaiKey ?? ""}
                       />
                     </div>
@@ -915,19 +1009,26 @@ export default function GeneratePage() {
                         )
                         setSettings(settings)
                       }}
-                      className="h-auto px-2 py-1"
+                      className="w-full py-6 text-base font-medium relative overflow-hidden group"
                     >
-                      {t("save")}
+                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                      <span className="relative z-10">{t("save")}</span>
                     </Button>
                   </DialogClose>
                 </DialogContent>
               </Dialog>
             </div>
           ) : (
-            <Card className="w-full max-w-250 sm:min-w-150 xl:min-w-200">
-              <CardHeader>
-                <CardTitle>{t("ai")}</CardTitle>
-                <CardDescription>{t("generate-ai-desc")}</CardDescription>
+            <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-violet-500/5 rounded-xl"></div>
+              <CardHeader className="pb-4 relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-purple-500 to-primary rounded-full p-1.5">
+                    <BrainCircuit20Regular className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle className="text-2xl">{t("ai")}</CardTitle>
+                </div>
+                <CardDescription className="text-base">{t("generate-ai-desc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Prompt Input */}
@@ -939,7 +1040,7 @@ export default function GeneratePage() {
                         <Label
                           onClick={() => setPromptText(getRandomPrompt(lang))}
                           htmlFor="prompt-text"
-                          className="decoration-foreground/50 cursor-pointer underline decoration-dotted underline-offset-2"
+                          className="text-sm font-medium decoration-foreground/50 cursor-pointer underline decoration-dotted underline-offset-2"
                         >
                           {t("enter-prompt")}
                         </Label>
@@ -952,22 +1053,23 @@ export default function GeneratePage() {
                       placeholder={t("ai-prompt-placeholder")}
                       value={promptText}
                       onChange={(e) => setPromptText(e.target.value)}
-                      className="flex-1"
+                      className="flex-1 h-12 bg-background z-10"
                     />
                     <Button
                       onClick={generateAiPassword}
                       disabled={isGeneratingAi || !promptText.trim()}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 h-12 px-6 relative overflow-hidden group"
                     >
+                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                       {isGeneratingAi ? (
                         <>
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          {t("ai-loading")}
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent relative z-10" />
+                          <span className="relative z-10">{t("ai-loading")}</span>
                         </>
                       ) : (
                         <>
-                          <Sparkle20Regular className="mr-2 h-4 w-4" />
-                          {t("generate")}
+                          <Sparkle20Regular className="mr-2 h-5 w-5 relative z-10" />
+                          <span className="relative z-10">{t("generate")}</span>
                         </>
                       )}
                     </Button>
@@ -980,45 +1082,58 @@ export default function GeneratePage() {
                 {/* Generated Password Display */}
                 {aiPasswords.length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="font-medium">{t("ai-suggestions")}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-medium text-lg">{t("ai-suggestions")}</h3>
+                      <div className="bg-primary/10 rounded-full px-2 py-0.5 text-xs text-primary font-medium">
+                        {aiPasswords.length}
+                      </div>
+                    </div>
                     <div className="space-y-3">
                       {aiPasswords.map((password, index) => (
                         <div
                           key={index}
-                          className="bg-secondary dark:bg-primary-foreground flex items-center justify-between rounded-md p-3"
+                          className="relative overflow-hidden bg-secondary/30 backdrop-blur-sm dark:bg-primary-foreground/5 flex items-center justify-between rounded-xl p-4 transition-all hover:bg-secondary/50 dark:hover:bg-primary-foreground/10 border border-transparent hover:border-primary/20"
                         >
-                          <div className="space-y-1">
+                          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-primary/5 opacity-0 hover:opacity-100 transition-opacity"></div>
+                          <div className="space-y-1 relative z-10">
                             <div className="font-mono text-lg">
                               {showPassword
                                 ? password
                                 : "•".repeat(password.length)}
                             </div>
-                            <div className="text-muted-foreground text-sm">
+                            <div className="text-muted-foreground text-sm flex items-center gap-1">
+                              <div className="bg-primary/10 rounded-full p-0.5">
+                                <Sparkle20Regular className="h-3.5 w-3.5 text-primary" />
+                              </div>
                               {t("suggestion-index", {
                                 index: index + 1,
                               })}
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 relative z-10">
                             <Button
                               variant="outline"
                               size="sm"
+                              className="h-10 px-4 font-medium relative overflow-hidden group"
                               onClick={() => {
                                 setGeneratedPassword(password)
                                 setPasswordStats(getStrengthInfo(password))
                               }}
                             >
-                              {t("select")}
+                              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500/20 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                              <span className="relative z-10">{t("select")}</span>
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="h-10 w-10 relative group"
                               onClick={() => {
                                 navigator.clipboard.writeText(password)
                                 toast(t("copied"))
                               }}
                             >
-                              <Copy20Regular className="h-4 w-4" />
+                              <span className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                              <Copy20Regular className="h-5 w-5 relative z-10" />
                             </Button>
                           </div>
                         </div>
@@ -1029,10 +1144,54 @@ export default function GeneratePage() {
 
                 {/* Selected Password Analysis */}
                 {aiPasswords.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="font-medium">
-                      {t("selected-password-analysis")}
-                    </h3>
+                  <div className="space-y-6 mt-8">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-medium text-lg">{t("selected-password-analysis")}</h3>
+                    </div>
+                    
+                    {/* Generated Password Display */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-password" className="text-sm font-medium">{t("password")}</Label>
+                      <div className="relative">
+                        <Input
+                          id="ai-password"
+                          type={showPassword ? "text" : "password"}
+                          value={generatedPassword}
+                          readOnly
+                          className="pr-20 font-mono text-base h-12 bg-background"
+                        />
+                        <div className="absolute top-0 right-0 flex h-full">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="h-full"
+                          >
+                            {showPassword ? (
+                              <EyeOff20Regular className="h-5 w-5" />
+                            ) : (
+                              <Eye20Regular className="h-5 w-5" />
+                            )}
+                            <span className="sr-only">
+                              Toggle password visibility
+                            </span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={copyToClipboard}
+                            className="h-full"
+                          >
+                            {copied ? (
+                              <Checkmark20Regular className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Copy20Regular className="h-5 w-5" />
+                            )}
+                            <span className="sr-only">Copy to clipboard</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Password Preview */}
                     {showPassword && (
@@ -1040,14 +1199,50 @@ export default function GeneratePage() {
                     )}
 
                     {/* Password Stats */}
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="bg-secondary/50 backdrop-blur-sm dark:bg-primary-foreground/10 rounded-xl p-4 transition-all hover:bg-secondary/80 dark:hover:bg-primary-foreground/20">
+                        <div className="text-muted-foreground text-sm mb-1">
+                          {t("length")}
+                        </div>
+                        <div className="text-xl font-bold flex items-center gap-2">
+                          <span className="text-primary">{passwordStats.length}</span> {t("characters")}
+                        </div>
+                      </div>
+                      <div className="bg-secondary/50 backdrop-blur-sm dark:bg-primary-foreground/10 rounded-xl p-4 transition-all hover:bg-secondary/80 dark:hover:bg-primary-foreground/20">
+                        <div className="text-muted-foreground text-sm mb-1">
+                          {t("strength")}
+                        </div>
+                        <div className="text-xl font-bold">
+                          {getStrengthLabel(passwordStats.entropy)}
+                        </div>
+                      </div>
+                    </div>
+
                     <PasswordStats passwordAnalysis={passwordStats} />
 
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <Label>
+                        <Label className="text-sm font-medium">
                           {t("entropy", { entropy: passwordStats.entropy })}
                         </Label>
-                        <span>{getStrengthLabel(passwordStats.entropy)}</span>
+                        <span className="font-medium px-3 py-1 rounded-full text-xs" 
+                          style={{
+                            backgroundColor: 
+                              passwordStats.entropy < 30 ? 'rgb(239, 68, 68, 0.2)' : 
+                              passwordStats.entropy < 50 ? 'rgb(249, 115, 22, 0.2)' : 
+                              passwordStats.entropy < 70 ? 'rgb(234, 179, 8, 0.2)' : 
+                              passwordStats.entropy < 90 ? 'rgb(34, 197, 94, 0.2)' : 
+                              'rgb(16, 185, 129, 0.2)',
+                            color: 
+                              passwordStats.entropy < 30 ? 'rgb(239, 68, 68)' : 
+                              passwordStats.entropy < 50 ? 'rgb(249, 115, 22)' : 
+                              passwordStats.entropy < 70 ? 'rgb(234, 179, 8)' : 
+                              passwordStats.entropy < 90 ? 'rgb(34, 197, 94)' : 
+                              'rgb(16, 185, 129)'
+                          }}
+                        >
+                          {getStrengthLabel(passwordStats.entropy)}
+                        </span>
                       </div>
                       <Progress
                         value={Math.min(passwordStats.entropy, 128) / 1.28}
@@ -1062,6 +1257,27 @@ export default function GeneratePage() {
                   </div>
                 )}
               </CardContent>
+              <CardFooter className="pt-2 pb-6 relative z-10">
+                <Button
+                  onClick={generateAiPassword}
+                  disabled={isGeneratingAi || !promptText.trim()}
+                  className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
+                  size="lg"
+                >
+                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                  {isGeneratingAi ? (
+                    <>
+                      <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent relative z-10" />
+                      <span className="relative z-10">{t("ai-loading")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkle20Regular className="h-5 w-5 relative z-10" />
+                      <span className="relative z-10">{t("generate-with-ai")}</span>
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
             </Card>
           )}
         </TabsContent>

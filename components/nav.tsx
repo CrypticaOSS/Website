@@ -3,14 +3,19 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  DocumentText20Regular,
   History20Regular,
-  Home20Regular,
+  Info20Regular,
   List20Regular,
   LockClosed20Regular,
+  Mail20Regular,
+  Password20Regular,
   Settings20Regular,
   Shield20Regular,
+  ShieldLock20Regular,
   Translate20Regular,
 } from "@fluentui/react-icons"
+import { Twitter, Github, MessageCircle } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import {
@@ -90,6 +95,16 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
+                <Link href="/vault">
+                  <SidebarMenuButton
+                    className={currentPage === "/vault" ? "bg-accent" : ""}
+                  >
+                    <Password20Regular />
+                    {t("vault")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <Link href="/generate">
                   <SidebarMenuButton
                     className={currentPage === "/generate" ? "bg-accent" : ""}
@@ -121,15 +136,101 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-              <Link href="/breaches">
+                <Link href="/breaches">
+                  <SidebarMenuButton
+                    className={currentPage === "/breaches" ? "bg-accent" : ""}
+                  >
+                    <ShieldLock20Regular />
+                    {t("breaches")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>{t("legal")}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <Link href="/contact">
+                  <SidebarMenuButton
+                    className={currentPage === "/contact" ? "bg-accent" : ""}
+                  >
+                    <Mail20Regular />
+                    {t("contact-us")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/docs">
+                  <SidebarMenuButton
+                    className={currentPage === "/docs" ? "bg-accent" : ""}
+                  >
+                    <Info20Regular />
+                    {t("documentation")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/terms">
+                  <SidebarMenuButton
+                    className={currentPage === "/terms" ? "bg-accent" : ""}
+                  >
+                    <DocumentText20Regular />
+                    {t("terms-of-service")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/privacy">
+                  <SidebarMenuButton
+                    className={currentPage === "/privacy" ? "bg-accent" : ""}
+                  >
+                    <ShieldLock20Regular />
+                    {t("privacy-policy")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>{t("socials")}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
                 <SidebarMenuButton
-                  className={currentPage === "/breaches" ? "bg-accent" : ""}
+                  asChild
                 >
-                  <Shield20Regular />
-                  {t("breaches")}
+                  <a href="https://twitter.com/CrypticaApp" target="_blank" rel="noopener noreferrer">
+                    <Twitter className="size-5" />
+                    {t("twitter")}
+                  </a>
                 </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                >
+                  <a href="https://github.com/CrypticaOSS" target="_blank" rel="noopener noreferrer">
+                    <Github className="size-5" />
+                    {t("github")}
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                >
+                  <a href="https://discord.gg/bka49hEnhw" target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="size-5" />
+                    {t("discord")}
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

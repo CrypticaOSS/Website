@@ -210,7 +210,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the AGPL License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -222,17 +222,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [docs.crypticapp.org](https://docs.crypticapp.org)
-- **Issues**: [GitHub Issues](https://github.com/CrypticaOSS/cryptica-site/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/CrypticaOSS/cryptica-site/discussions)
+- **Discord**: [discord.gg/bka49hEnhw](https://discord.gg/bka49hEnhw)
+- **Documentation**: [crypticapp.org/docs](https://crypticapp.org/docs)
+- **Issues**: [GitHub Issues](https://github.com/CrypticaOSS/Website/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/CrypticaOSS/Website/discussions)
 - **Email**: support@crypticapp.org
 
 ## 🔗 Links
 
 - **Website**: [crypticapp.org](https://crypticapp.org)
-- **Documentation**: [docs.crypticapp.org](https://docs.crypticapp.org)
-- **GitHub**: [github.com/CrypticaOSS/cryptica-site](https://github.com/CrypticaOSS/cryptica-site)
+- **Documentation**: [crypticapp.org/docs](https://crypticapp.org/docs)
+- **GitHub**: [github.com/CrypticaOSS/cryptica-site](https://github.com/CrypticaOSS/Website)
 - **Twitter**: [@crypticaapp](https://twitter.com/crypticaapp)
+- **Discord**: [discord.gg/bka49hEnhw](https://discord.gg/bka49hEnhw)
 
 ---
 

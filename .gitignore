@@ -375,3 +375,12 @@ yarn-error.log*
 
 .contentlayer
 .env
+
+.vscode
+.vscode/**
+
+messages/soon
+messages/soon/**
+
+i18n/soon
+i18n/soon/**

@@ -5,10 +5,9 @@ import { useEffect, useState } from "react";
 
 type Breach = { name: string; domain: string; date: string; description: string };
 
-export function BreachDetailsModal({ open, onOpenChange, hash, count }: {
+export function BreachDetailsModal({ open, onOpenChange, count }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  hash: string;
   count: number;
 }) {
   const [breaches, setBreaches] = useState<Breach[]>([]);

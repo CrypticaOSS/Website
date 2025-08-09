@@ -4,7 +4,6 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withPWA = withPWAInit({
   dest: 'public',
   register: true,
-  skipWaiting: true,
 });
 
 const withNextIntl = createNextIntlPlugin();

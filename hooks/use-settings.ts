@@ -1,4 +1,5 @@
 import { useLocalStorage } from "./use-localStorage"
+import { useStorage } from "./use-storage"
 
 export interface Settings {
   passwordLengthOne: number
@@ -9,6 +10,12 @@ export interface Settings {
   hidePassword?: boolean
   defaultPasswordConfig?: DefaultPasswordConfig
   openaiKey?: string
+  dbConnection?: {
+    url: string
+    apiKey?: string
+    enabled: boolean
+    type: 'supabase' | 'firebase' | 'custom'
+  }
 }
 
 export interface CustomCharacters {
@@ -40,9 +47,17 @@ export const defaultSettings = {
 }
 
 export function useSettings() {
-  const [settings, setSettings] = useLocalStorage<Settings>(
+  // First get settings using localStorage to check if DB is enabled
+  const [localSettings] = useLocalStorage<Settings>(
     "settings",
     defaultSettings
+  )
+  
+  // Use useStorage with DB config if available
+  const [settings, setSettings] = useStorage<Settings>(
+    "settings",
+    defaultSettings,
+    localSettings.dbConnection
   )
 
   return {

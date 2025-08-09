@@ -68,21 +68,19 @@ export default function Timeline(props: TimelineProps) {
     <section>
       <h3 className="text-xl font-bold">{title}</h3>
       <div className="border-l">
-        {els.map((el, i) => (
-          <>
-            {matchFilter(el.content) && (
-              <ActivityItem
-                advancedVision={props.advancedVision}
-                timeline_index={props.index}
-                index={i}
-                key={i}
-                deleteEvent={deleteElement}
-                activity={el}
-                hide={props.hide}
-              />
-            )}
-          </>
-        ))}
+        {els.map((el, i) =>
+          matchFilter(el.content) && (
+            <ActivityItem
+              advancedVision={props.advancedVision}
+              timeline_index={props.index}
+              index={i}
+              key={i}
+              deleteEvent={deleteElement}
+              activity={el}
+              hide={props.hide}
+            />
+          )
+        )}
       </div>
     </section>
   )

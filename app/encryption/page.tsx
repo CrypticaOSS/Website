@@ -216,69 +216,89 @@ export default function EncryptionPage() {
 
   return (
     <div>
-      <div className="mb-2 flex items-center space-x-2">
+      <div className="mb-4 flex items-center space-x-2">
         <Translate20Regular primaryFill="#0088FF" className="text-white" />
 
         <p className="ml-2 font-bold">{t("encryption")}</p>
       </div>
-      <Tabs defaultValue="encrypt">
-        <TabsList>
-          <TabsTrigger value="encrypt">
-            <Password20Regular />
-            <p className="font-semibold">{t("encrypt")}</p>
-          </TabsTrigger>
-          <TabsTrigger value="decrypt">
-            <Translate20Regular />
-            <p className="font-semibold">{t("decrypt")}</p>
-          </TabsTrigger>
-          <TabsTrigger value="hashing">
-            <NumberSymbol20Regular />
-            <p className="font-semibold">{t("hashing")}</p>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="encrypt" className="w-full max-w-5xl mx-auto">
+        <div className="mx-auto w-full max-w-2xl mb-8">
+          <TabsList className="w-full">
+            <TabsTrigger value="encrypt" className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-primary/20 to-purple-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <Password20Regular className="h-5 w-5" />
+                <p className="font-medium">{t("encrypt")}</p>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="decrypt" className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-primary/20 to-emerald-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <Translate20Regular className="h-5 w-5" />
+                <p className="font-medium">{t("decrypt")}</p>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="hashing" className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-primary/20 to-orange-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <NumberSymbol20Regular className="h-5 w-5" />
+                <p className="font-medium">{t("hashing")}</p>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent
           className="justify-center border-none data-[state=active]:flex"
           value="encrypt"
         >
-          <Card className="w-full max-w-250">
-            <CardHeader>
-              <CardTitle> {t("encrypt")}</CardTitle>
-              <CardDescription>{t("encrypt-desc")}</CardDescription>
+          <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-xl"></div>
+            <CardHeader className="pb-4 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-blue-500 to-primary rounded-full p-1.5">
+                  <Password20Regular className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl">{t("encrypt")}</CardTitle>
+              </div>
+              <CardDescription className="text-base">{t("encrypt-desc")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-6 relative z-10">
               <div className="space-y-2">
-                <Label htmlFor="text-to-encrypt">{t("text-to-encrypt")}</Label>
+                <Label htmlFor="text-to-encrypt" className="text-sm font-medium">{t("text-to-encrypt")}</Label>
                 <Textarea
                   id="text-to-encrypt"
                   placeholder={t("encrypt-text-placeholder")}
                   value={textToEncrypt}
                   onChange={(e) => setTextToEncrypt(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[120px] bg-background/80 backdrop-blur-sm resize-none border-primary/10 focus:border-primary/30"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="encryption-key">{t("key")}</Label>
+                <Label htmlFor="encryption-key" className="text-sm font-medium">{t("key")}</Label>
                 <div className="flex space-x-2">
-                  <Input
-                    id="encryption-key"
-                    type={keyVis ? "text" : "password"}
-                    placeholder={t("key-placeholder")}
-                    value={encryptionKey}
-                    onChange={(e) => setEncryptionKey(e.target.value)}
-                  />
-                  <Button
-                    className="h-auto px-2 py-1"
-                    variant="outline"
-                    onClick={() => setKeyVis(!keyVis)}
-                  >
-                    {keyVis ? <EyeOff20Regular /> : <Eye20Regular />}
-                  </Button>
+                  <div className="relative flex-grow">
+                    <Input
+                      id="encryption-key"
+                      type={keyVis ? "text" : "password"}
+                      placeholder={t("key-placeholder")}
+                      value={encryptionKey}
+                      onChange={(e) => setEncryptionKey(e.target.value)}
+                      className="h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30 pr-12"
+                    />
+                    <Button
+                      className="absolute right-0 top-0 h-full px-3"
+                      variant="ghost"
+                      onClick={() => setKeyVis(!keyVis)}
+                    >
+                      {keyVis ? <EyeOff20Regular className="h-5 w-5" /> : <Eye20Regular className="h-5 w-5" />}
+                    </Button>
+                  </div>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="outline"
-                          className="h-auto px-2 py-1"
+                          className="h-12 w-12 rounded-lg bg-secondary/50 backdrop-blur-sm hover:bg-secondary/80 border-primary/10 hover:border-primary/30"
                           id="GenKeyBtn"
                           onClick={() =>
                             setEncryptionKey(
@@ -291,7 +311,7 @@ export default function EncryptionPage() {
                             )
                           }
                         >
-                          <Key20Regular />
+                          <Key20Regular className="h-5 w-5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -302,12 +322,12 @@ export default function EncryptionPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hash-algorithm">{t("encryption-algo")}</Label>
+                <Label htmlFor="hash-algorithm" className="text-sm font-medium">{t("encryption-algo")}</Label>
                 <Select
                   defaultValue={settings.encryptAlgo}
                   onValueChange={onSelectChanged}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30">
                     <SelectValue placeholder={t("algorithm")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -321,27 +341,30 @@ export default function EncryptionPage() {
                 </Select>
               </div>
               {encryptedText && (
-                <div className="space-y-2">
-                  <Label htmlFor="encrypted-result">
+                <div className="space-y-2 pt-4 border-t border-primary/10">
+                  <Label htmlFor="encrypted-result" className="text-sm font-medium flex items-center gap-2">
                     {t("encrypted-text")}
+                    <span className="bg-blue-500/10 text-blue-500 text-xs px-2 py-0.5 rounded-full">
+                      {algo.toUpperCase()}
+                    </span>
                   </Label>
                   <div className="relative">
                     <Textarea
                       id="encrypted-result"
                       value={encryptedText}
                       readOnly
-                      className="min-h-[100px] pr-10"
+                      className="min-h-[120px] pr-12 bg-background/80 backdrop-blur-sm resize-none border-primary/10 focus:border-primary/30 font-mono text-sm"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2"
+                      className="absolute top-3 right-3"
                       onClick={() => copyToClipboard(encryptedText)}
                     >
                       {copied ? (
-                        <Checkmark20Regular className="h-4 w-4" />
+                        <Checkmark20Regular className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy20Regular className="h-4 w-4" />
+                        <Copy20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">{t("copy-to-clipboard")}</span>
                     </Button>
@@ -349,9 +372,15 @@ export default function EncryptionPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
-              <Button onClick={encrypt} className="w-full">
-                {t("encrypt")}
+            <CardFooter className="pt-2 pb-6 relative z-10">
+              <Button 
+                onClick={encrypt} 
+                className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
+                size="lg"
+              >
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500 via-primary to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <Password20Regular className="h-5 w-5 relative z-10" />
+                <span className="relative z-10">{t("encrypt")}</span>
               </Button>
             </CardFooter>
           </Card>
@@ -360,45 +389,54 @@ export default function EncryptionPage() {
           className="justify-center border-none data-[state=active]:flex"
           value="decrypt"
         >
-          <Card className="w-full max-w-250">
-            <CardHeader>
-              <CardTitle>{t("decrypt")}</CardTitle>
-              <CardDescription>{t("decrypt-desc")}</CardDescription>
+          <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-emerald-500/5 rounded-xl"></div>
+            <CardHeader className="pb-4 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-green-500 to-primary rounded-full p-1.5">
+                  <Translate20Regular className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl">{t("decrypt")}</CardTitle>
+              </div>
+              <CardDescription className="text-base">{t("decrypt-desc")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-6 relative z-10">
               <div className="space-y-2">
-                <Label htmlFor="text-to-decrypt">{t("encrypted-text")}</Label>
+                <Label htmlFor="text-to-decrypt" className="text-sm font-medium">{t("encrypted-text")}</Label>
                 <Textarea
                   id="text-to-decrypt"
                   placeholder={t("encrypt-text-placeholder")}
                   value={textToDecrypt}
                   onChange={(e) => setTextToDecrypt(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[120px] bg-background/80 backdrop-blur-sm resize-none border-primary/10 focus:border-primary/30 font-mono text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="decryption-key">{t("key")}</Label>
+                <Label htmlFor="decryption-key" className="text-sm font-medium">{t("key")}</Label>
                 <div className="flex space-x-2">
-                  <Input
-                    id="decryption-key"
-                    type={keyVis ? "text" : "password"}
-                    placeholder={t("key-placeholder")}
-                    value={decryptionKey}
-                    onChange={(e) => setDecryptionKey(e.target.value)}
-                  />
-                  <Button
-                    className="h-auto px-2 py-1"
-                    variant="outline"
-                    onClick={() => setKeyVis(!keyVis)}
-                  >
-                    {keyVis ? <EyeOff20Regular /> : <Eye20Regular />}
-                  </Button>
+                  <div className="relative flex-grow">
+                    <Input
+                      id="decryption-key"
+                      type={keyVis ? "text" : "password"}
+                      placeholder={t("key-placeholder")}
+                      value={decryptionKey}
+                      onChange={(e) => setDecryptionKey(e.target.value)}
+                      className="h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30 pr-12"
+                    />
+                    <Button
+                      className="absolute right-0 top-0 h-full px-3"
+                      variant="ghost"
+                      onClick={() => setKeyVis(!keyVis)}
+                    >
+                      {keyVis ? <EyeOff20Regular className="h-5 w-5" /> : <Eye20Regular className="h-5 w-5" />}
+                    </Button>
+                  </div>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="outline"
-                          className="h-auto px-2 py-1"
+                          className="h-12 w-12 rounded-lg bg-secondary/50 backdrop-blur-sm hover:bg-secondary/80 border-primary/10 hover:border-primary/30"
                           id="GenKeyBtn"
                           onClick={() =>
                             setDecryptionKey(
@@ -411,7 +449,7 @@ export default function EncryptionPage() {
                             )
                           }
                         >
-                          <Key20Regular />
+                          <Key20Regular className="h-5 w-5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -422,12 +460,12 @@ export default function EncryptionPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hash-algorithm">{t("decryption-algo")}</Label>
+                <Label htmlFor="hash-algorithm" className="text-sm font-medium">{t("decryption-algo")}</Label>
                 <Select
                   defaultValue={settings.encryptAlgo}
                   onValueChange={onSelectChanged}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30">
                     <SelectValue placeholder={t("algorithm")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -441,27 +479,30 @@ export default function EncryptionPage() {
                 </Select>
               </div>
               {decryptedText && (
-                <div className="mt-4 space-y-2">
-                  <Label htmlFor="decrypted-result">
+                <div className="space-y-2 pt-4 border-t border-primary/10">
+                  <Label htmlFor="decrypted-result" className="text-sm font-medium flex items-center gap-2">
                     {t("decrypted-text")}
+                    <span className="bg-green-500/10 text-green-500 text-xs px-2 py-0.5 rounded-full">
+                      {algo.toUpperCase()}
+                    </span>
                   </Label>
                   <div className="relative">
                     <Textarea
                       id="decrypted-result"
                       value={decryptedText}
                       readOnly
-                      className="min-h-[100px] pr-10"
+                      className="min-h-[120px] pr-12 bg-background/80 backdrop-blur-sm resize-none border-primary/10 focus:border-primary/30"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2"
+                      className="absolute top-3 right-3"
                       onClick={() => copyToClipboard(decryptedText)}
                     >
                       {copied ? (
-                        <Checkmark20Regular className="h-4 w-4" />
+                        <Checkmark20Regular className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy20Regular className="h-4 w-4" />
+                        <Copy20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">{t("copy-to-clipboard")}</span>
                     </Button>
@@ -469,9 +510,15 @@ export default function EncryptionPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
-              <Button onClick={decrypt} className="w-full">
-                {t("decrypt")}
+            <CardFooter className="pt-2 pb-6 relative z-10">
+              <Button 
+                onClick={decrypt} 
+                className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
+                size="lg"
+              >
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-green-500 via-primary to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <Translate20Regular className="h-5 w-5 relative z-10" />
+                <span className="relative z-10">{t("decrypt")}</span>
               </Button>
             </CardFooter>
           </Card>
@@ -480,29 +527,35 @@ export default function EncryptionPage() {
           value="hashing"
           className="justify-center border-none data-[state=active]:flex"
         >
-          <Card className="w-full max-w-250">
-            <CardHeader>
-              <CardTitle>{t("hashing")}</CardTitle>
-              <CardDescription>{t("hash-desc")}</CardDescription>
+          <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5 rounded-xl"></div>
+            <CardHeader className="pb-4 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-amber-500 to-primary rounded-full p-1.5">
+                  <NumberSymbol20Regular className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl">{t("hashing")}</CardTitle>
+              </div>
+              <CardDescription className="text-base">{t("hash-desc")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 relative z-10">
               <div className="space-y-2">
-                <Label htmlFor="text-to-hash">{t("text-hash")}</Label>
+                <Label htmlFor="text-to-hash" className="text-sm font-medium">{t("text-hash")}</Label>
                 <Textarea
                   id="text-to-hash"
                   placeholder={t("hash-text-placeholder")}
                   value={textToHash}
                   onChange={(e) => setTextToHash(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[120px] bg-background/80 backdrop-blur-sm resize-none border-primary/10 focus:border-primary/30"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hash-algorithm">{t("hashing-algo")}</Label>
+                <Label htmlFor="hash-algorithm" className="text-sm font-medium">{t("hashing-algo")}</Label>
                 <Select
                   onValueChange={(v: string) => setHashAlgo(v)}
                   defaultValue={hashAlgo}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30">
                     <SelectValue placeholder={t("hashing-algo")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -517,25 +570,30 @@ export default function EncryptionPage() {
                 </Select>
               </div>
               {hashedText && (
-                <div className="mt-4 space-y-2">
-                  <Label htmlFor="hashed-result">{t("hashed-text")}</Label>
+                <div className="space-y-2 pt-4 border-t border-primary/10">
+                  <Label htmlFor="hashed-result" className="text-sm font-medium flex items-center gap-2">
+                    {t("hashed-text")}
+                    <span className="bg-amber-500/10 text-amber-500 text-xs px-2 py-0.5 rounded-full">
+                      {hashAlgo.toUpperCase()}
+                    </span>
+                  </Label>
                   <div className="relative">
                     <Textarea
                       id="hashed-result"
                       value={hashedText}
                       readOnly
-                      className="min-h-[100px] pr-10 font-mono text-sm"
+                      className="min-h-[120px] pr-12 bg-background/80 backdrop-blur-sm resize-none border-primary/10 focus:border-primary/30 font-mono text-sm"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2"
+                      className="absolute top-3 right-3"
                       onClick={() => copyToClipboard(hashedText)}
                     >
                       {copied ? (
-                        <Checkmark20Regular className="h-4 w-4" />
+                        <Checkmark20Regular className="h-5 w-5 text-green-500" />
                       ) : (
-                        <Copy20Regular className="h-4 w-4" />
+                        <Copy20Regular className="h-5 w-5" />
                       )}
                       <span className="sr-only">{t("copy-to-clipboard")}</span>
                     </Button>
@@ -543,9 +601,15 @@ export default function EncryptionPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
-              <Button onClick={hashClick} className="w-full">
-                {t("hash")}
+            <CardFooter className="pt-2 pb-6 relative z-10">
+              <Button 
+                onClick={hashClick} 
+                className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
+                size="lg"
+              >
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-amber-500 via-primary to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <NumberSymbol20Regular className="h-5 w-5 relative z-10" />
+                <span className="relative z-10">{t("hash")}</span>
               </Button>
             </CardFooter>
           </Card>

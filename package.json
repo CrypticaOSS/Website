@@ -1,13 +1,14 @@
 {
   "name": "@cryptica/website",
   "description": "Life’s messy. Your passwords don’t have to be.",
-  "version": "0.1.0",
-  "private": true,
+  "license": "AGPL-3.0-only",
+  "version": "0.2.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fluentui/react-icons": "^2.0.306",
@@ -30,6 +31,8 @@
     "radix-ui": "latest"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3",
     "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
     "@tailwindcss/postcss": "^4",
@@ -38,8 +41,11 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "commitlint": "^19.8.1",
     "eslint": "^9",
     "eslint-config-next": "15.4.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "minimatch": "^10.0.3",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^4",
@@ -49,6 +55,15 @@
     "@tailwindcss/oxide-linux-arm64-gnu": "^4.1.10",
     "@tailwindcss/oxide-linux-x64-gnu": "^4.1.7",
     "lightningcss-linux-x64-gnu": "^1.30.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,mdx,css}": [
+      "prettier --write"
+    ]
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

@@ -3,6 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Custom utility for hiding scrollbars while allowing scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari and Opera */
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.26 0 0);
@@ -105,54 +115,6 @@
   --shadow-xl:
     0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-}
-
-/* Aurora Theme */
-.aurora {
-  --background: #232946;
-  --foreground: #eaf6fb;
-  --card: #2d3250;
-  --card-foreground: #a5ffd6;
-  --primary: #3ec9f7;
-  --primary-foreground: #232946;
-  --accent: #a5ffd6;
-  --accent-foreground: #232946;
-}
-
-/* Sunset Theme */
-.sunset {
-  --background: #ffecd2;
-  --foreground: #3a1c71;
-  --card: #fcb69f;
-  --card-foreground: #ee0979;
-  --primary: #ff6a00;
-  --primary-foreground: #fff;
-  --accent: #ee0979;
-  --accent-foreground: #fff;
-}
-
-/* Cyber Theme */
-.cyber {
-  --background: #232526;
-  --foreground: #e0e0e0;
-  --card: #414345;
-  --card-foreground: #00f2fe;
-  --primary: #4facfe;
-  --primary-foreground: #232526;
-  --accent: #00f2fe;
-  --accent-foreground: #232526;
-}
-
-/* Mint Theme */
-.mint {
-  --background: #e0ffe0;
-  --foreground: #005f4b;
-  --card: #a8ffeb;
-  --card-foreground: #00c9a7;
-  --primary: #92fe9d;
-  --primary-foreground: #005f4b;
-  --accent: #00c9a7;
-  --accent-foreground: #fff;
 }
 
 @theme inline {
