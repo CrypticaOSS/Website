@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <footer className="border-t py-6 mt-10 text-center">
       <p className="text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Copyright - Cryptica 2025 - 2026. | Orginal Owner:{" "}
+        © {new Date().getFullYear()} - 2025 Copyright - Cryptica. | Orginal Owner:{" "}
         <a
           href="https://github.com/CodeMeAPixel"
           target="_blank"
