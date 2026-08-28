@@ -45,7 +45,7 @@ export default function Home() {
           </p>
           <div className="flex justify-center gap-4 mt-4">
             <Button variant="outline" size="lg" asChild>
-              <Link href="https://codemeapixel.dev/projects/cryptica">
+              <Link href="https://crypticapp.org/docs">
                 {t("learn-more")}
               </Link>
             </Button>
