@@ -14,6 +14,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
+import { Footer } from "@/components/footer"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -110,7 +111,8 @@ export default async function RootLayout({
                 <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                   <SidebarTrigger className="-ml-1" />
                 </header>
-                <div className="p-5">{children}</div>
+                <div className="p-5 flex-1">{children}</div>
+                <Footer />
               </SidebarInset>
             </SidebarProvider>
             <Toaster />

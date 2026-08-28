@@ -19,30 +19,30 @@ export default function ContactPage() {
           <div className="border rounded-lg p-6 bg-card/50 hover:bg-card/80 transition-colors">
             <h2 className="text-xl font-semibold mb-2">General Inquiries</h2>
             <p className="mb-4 text-muted-foreground">For general questions about Cryptica or our services.</p>
-            <a href="mailto:info@bytebrush.dev" className="text-primary hover:underline">info@bytebrush.dev</a>
+            <a href="mailto:info@crypticapp.org" className="text-primary hover:underline">info@crypticapp.org</a>
           </div>
 
           <div className="border rounded-lg p-6 bg-card/50 hover:bg-card/80 transition-colors">
             <h2 className="text-xl font-semibold mb-2">Technical Support</h2>
             <p className="mb-4 text-muted-foreground">Having issues with Cryptica? Our support team is ready to help.</p>
-            <a href="mailto:support@bytebrush.dev" className="text-primary hover:underline">support@bytebrush.dev</a>
+            <a href="mailto:support@crypticapp.org" className="text-primary hover:underline">support@crypticapp.org</a>
           </div>
 
           <div className="border rounded-lg p-6 bg-card/50 hover:bg-card/80 transition-colors">
             <h2 className="text-xl font-semibold mb-2">Privacy Concerns</h2>
             <p className="mb-4 text-muted-foreground">Questions about our privacy policy or data practices.</p>
-            <a href="mailto:privacy@bytebrush.dev" className="text-primary hover:underline">privacy@bytebrush.dev</a>
+            <a href="mailto:privacy@crypticapp.org" className="text-primary hover:underline">privacy@crypticapp.org</a>
           </div>
 
           <div className="border rounded-lg p-6 bg-card/50 hover:bg-card/80 transition-colors">
             <h2 className="text-xl font-semibold mb-2">Legal Matters</h2>
             <p className="mb-4 text-muted-foreground">For legal inquiries related to Cryptica.</p>
-            <a href="mailto:legal@bytebrush.dev" className="text-primary hover:underline">legal@bytebrush.dev</a>
+            <a href="mailto:legal@crypticapp.org" className="text-primary hover:underline">legal@crypticapp.org</a>
           </div>
           <div className="border rounded-lg p-6 bg-card/50 hover:bg-card/80 transition-colors">
             <h2 className="text-xl font-semibold mb-2">Discord Server</h2>
             <p className="mb-4 text-muted-foreground">Join our Discord server for community support and discussions.</p>
-            <a href="https://discord.gg/bka49hEnhw" className="text-primary hover:underline">Join Discord</a>
+            <a href="https://discord.gg/n5VBFAVpAe" className="text-primary hover:underline">Join Discord</a>
           </div>
           <div className="border rounded-lg p-6 bg-card/50 hover:bg-card/80 transition-colors">
             <h2 className="text-xl font-semibold mb-2">Find us on Twitter</h2>
@@ -69,11 +69,6 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <div className="border-t pt-6 mt-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ByteBrush Studios. {t("all-rights-reserved")}
-          </p>
-        </div>
       </div>
     </div>
   )
