@@ -225,7 +225,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                 >
-                  <a href="https://discord.gg/bka49hEnhw" target="_blank" rel="noopener noreferrer">
+                  <a href="https://discord.gg/n5VBFAVpAe" target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="size-5" />
                     {t("discord")}
                   </a>
