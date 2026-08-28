@@ -142,11 +142,6 @@ export default function PrivacyPage() {
           </p>
         </div>
 
-        <div className="border-t pt-6 mt-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ByteBrush Studios. {t("all-rights-reserved")}
-          </p>
-        </div>
       </div>
     </div>
   )
