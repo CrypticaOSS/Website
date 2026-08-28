@@ -11,5 +11,6 @@ const withNextIntl = createNextIntlPlugin();
 export default withPWA(
   withNextIntl({
     reactStrictMode: false,
+    output: 'standalone',
   })
 );
