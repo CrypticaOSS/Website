@@ -138,7 +138,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-semibold mb-2">7. Contact Us</h2>
           <p className="text-muted-foreground leading-relaxed">
             If you have any questions about this Privacy Policy, please contact us at:
-            <a href="mailto:privacy@bytebrush.dev" className="block mt-2 text-primary hover:underline">privacy@bytebrush.dev</a>
+            <a href="mailto:privacy@crypticapp.org" className="block mt-2 text-primary hover:underline">privacy@crypticapp.org</a>
           </p>
         </div>
 

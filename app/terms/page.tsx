@@ -91,7 +91,7 @@ export default function TermsPage() {
           <h2 className="text-xl font-semibold mb-2">9. Contact Us</h2>
           <p className="text-muted-foreground leading-relaxed">
             If you have any questions about these Terms, please contact us at:
-            <a href="mailto:legal@bytebrush.dev" className="block mt-2 text-primary hover:underline">legal@bytebrush.dev</a>
+            <a href="mailto:legal@crypticapp.org" className="block mt-2 text-primary hover:underline">legal@crypticapp.org</a>
           </p>
         </div>
 
