@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePresets } from "@/hooks/use-presets"
 import { useSettings } from "@/hooks/use-settings"
@@ -82,14 +82,18 @@ export default function GeneratePage() {
 
   const t = useTranslations()
   const lang = t("lang")
-  const [generatedPassword, setGeneratedPassword] = useState(
-    generatePasswordByStrength(2, settings.customChars)
-  )
+  const [generatedPassword, setGeneratedPassword] = useState("")
   const [showPassword, setShowPassword] = useState(true)
   const [copied, setCopied] = useState(false)
   const [passwordStats, setPasswordStats] = useState(
-    getStrengthInfo(generatedPassword)
+    getStrengthInfo("")
   )
+
+  useEffect(() => {
+    const initialPassword = generatePasswordByStrength(2, settings.customChars)
+    setGeneratedPassword(initialPassword)
+    setPasswordStats(getStrengthInfo(initialPassword))
+  }, [settings.customChars])
 
   // Simple generator state
   const [strengthLevel, setStrengthLevel] = useState(2) // 0-4

@@ -174,7 +174,7 @@ export default function ActivityPage() {
         <History20Regular primaryFill="#0088FF" className="text-white" />
         <p className="ml-2 font-bold">{t("activity")}</p>
         <Popover>
-          <PopoverTrigger>
+          <PopoverTrigger asChild>
             <Button className="h-auto px-2 py-1">{t("filter")}</Button>
           </PopoverTrigger>
           <PopoverContent className="flex items-center space-x-2">

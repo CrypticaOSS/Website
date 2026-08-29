@@ -12,5 +12,13 @@ export default withPWA(
   withNextIntl({
     reactStrictMode: false,
     output: 'standalone',
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'avatars.githubusercontent.com',
+        },
+      ],
+    },
   })
 );

@@ -15,7 +15,7 @@ import {
   ShieldLock20Regular,
   Translate20Regular,
 } from "@fluentui/react-icons"
-import { Twitter, Github, MessageCircle } from "lucide-react"
+import { Twitter, Github, MessageCircle, Users } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import {
@@ -150,9 +150,19 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{t("legal")}</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("other")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <Link href="/team">
+                  <SidebarMenuButton
+                    className={currentPage === "/team" ? "bg-accent" : ""}
+                  >
+                    <Users />
+                    {t("team")}
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/contact">
                   <SidebarMenuButton
