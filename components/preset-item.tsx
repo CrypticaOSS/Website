@@ -88,7 +88,7 @@ export default function PresetItem(props: PresetItemProps) {
         <div>
           {!isMobile ? (
             <Dialog>
-              <DialogTrigger>
+              <DialogTrigger asChild>
                 <Button variant="ghost" className="h-6 space-x-2 p-1 font-bold">
                   <Edit16Regular />
                 </Button>
@@ -331,7 +331,7 @@ export default function PresetItem(props: PresetItemProps) {
                   />
                 </div>
                 <DialogFooter>
-                  <Close>
+                  <Close asChild>
                     <Button
                       disabled={
                         !hasChars && !hasLower && !hasUpper && !hasNumber
@@ -372,7 +372,7 @@ export default function PresetItem(props: PresetItemProps) {
                       {t("edit")}
                     </Button>
                   </Close>
-                  <Close>
+                  <Close asChild>
                     <Button variant="outline">{t("cancel")}</Button>
                   </Close>
                 </DialogFooter>
@@ -380,7 +380,7 @@ export default function PresetItem(props: PresetItemProps) {
             </Dialog>
           ) : (
             <Drawer>
-              <DrawerTrigger>
+              <DrawerTrigger asChild>
                 <Button variant="ghost" className="h-6 space-x-2 p-1 font-bold">
                   <Edit16Regular />
                 </Button>
@@ -630,7 +630,7 @@ export default function PresetItem(props: PresetItemProps) {
                 </div>
                 <DrawerFooter>
                   <div className="flex items-center justify-center space-x-2">
-                    <DrawerClose>
+                    <DrawerClose asChild>
                       <Button
                         onClick={() => {
                           if (!hasChars && !hasLower && !hasUpper && !hasNumber)
@@ -671,7 +671,7 @@ export default function PresetItem(props: PresetItemProps) {
                         {t("edit")}
                       </Button>
                     </DrawerClose>
-                    <DrawerClose>
+                    <DrawerClose asChild>
                       <Button variant="outline">{t("cancel")}</Button>
                     </DrawerClose>
                   </div>

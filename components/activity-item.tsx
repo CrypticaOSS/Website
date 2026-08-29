@@ -146,86 +146,87 @@ export default function ActivityItem(props: ActivityProps) {
           )}
         </p>
         {!isMobile && (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger>
-                <Dialog>
+          <Dialog>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <DialogTrigger>
                     {getStrength(props.activity.content)}
                   </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>
-                        <span className="flex">
-                          {getStrength(props.activity.content)}
-                        </span>
-                      </DialogTitle>
-                      <div>
-                        <PasswordAnalysis
-                          generatedPassword={props.activity.content}
-                        />
-                        <PasswordStats
-                          showLength
-                          className="mt-4"
-                          passwordAnalysis={passwordStats}
-                        />
-                        <div className="mt-4 flex items-center justify-center space-x-2">
-                          <Button
-                            onClick={Copy}
-                            className="h-auto px-2 py-1"
-                            variant="default"
-                          >
-                            {t("copy")}
-                          </Button>
-                          <DialogClose>
-                            <Button
-                              className="h-auto px-2 py-1"
-                              variant="outline"
-                            >
-                              {t("close")}
-                            </Button>
-                          </DialogClose>
-                        </div>
-                      </div>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              </TooltipTrigger>
-              <TooltipContent className="grid grid-cols-[24px_1fr] items-center">
-                {getStrengthInfo(props.activity.content).lowercase > 0 ? (
-                  <Checkmark16Regular />
-                ) : (
-                  <Dismiss16Regular />
-                )}
+                </TooltipTrigger>
+                <TooltipContent className="grid grid-cols-[24px_1fr] items-center">
+                  {getStrengthInfo(props.activity.content).lowercase > 0 ? (
+                    <Checkmark16Regular />
+                  ) : (
+                    <Dismiss16Regular />
+                  )}
 
-                <p>{t("lowercases")}</p>
+                  <p>{t("lowercases")}</p>
 
-                {getStrengthInfo(props.activity.content).uppercase > 0 ? (
-                  <Checkmark16Regular />
-                ) : (
-                  <Dismiss16Regular />
-                )}
+                  {getStrengthInfo(props.activity.content).uppercase > 0 ? (
+                    <Checkmark16Regular />
+                  ) : (
+                    <Dismiss16Regular />
+                  )}
 
-                <p>{t("uppercases")}</p>
+                  <p>{t("uppercases")}</p>
 
-                {getStrengthInfo(props.activity.content).numbers > 0 ? (
-                  <Checkmark16Regular />
-                ) : (
-                  <Dismiss16Regular />
-                )}
+                  {getStrengthInfo(props.activity.content).numbers > 0 ? (
+                    <Checkmark16Regular />
+                  ) : (
+                    <Dismiss16Regular />
+                  )}
 
-                <p>{t("nbrs")}</p>
+                  <p>{t("nbrs")}</p>
 
-                {getStrengthInfo(props.activity.content).special > 0 ? (
-                  <Checkmark16Regular />
-                ) : (
-                  <Dismiss16Regular />
-                )}
+                  {getStrengthInfo(props.activity.content).special > 0 ? (
+                    <Checkmark16Regular />
+                  ) : (
+                    <Dismiss16Regular />
+                  )}
 
-                <p>{t("specialchars")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  <p>{t("specialchars")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  <span className="flex">
+                    {getStrength(props.activity.content)}
+                  </span>
+                </DialogTitle>
+                <div>
+                  <PasswordAnalysis
+                    generatedPassword={props.activity.content}
+                  />
+                  <PasswordStats
+                    showLength
+                    className="mt-4"
+                    passwordAnalysis={passwordStats}
+                  />
+                  <div className="mt-4 flex items-center justify-center space-x-2">
+                    <Button
+                      onClick={Copy}
+                      className="h-auto px-2 py-1"
+                      variant="default"
+                    >
+                      {t("copy")}
+                    </Button>
+                    <DialogClose asChild>
+                      <Button
+                        className="h-auto px-2 py-1"
+                        variant="outline"
+                      >
+                        {t("close")}
+                      </Button>
+                    </DialogClose>
+                  </div>
+                </div>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
       <div className="flex justify-end space-x-1">
@@ -263,7 +264,7 @@ export default function ActivityItem(props: ActivityProps) {
         </TooltipProvider>
         {isMobile && (
           <Drawer>
-            <DrawerTrigger>
+            <DrawerTrigger asChild>
               <Button variant="outline" className="w-[48px]">
                 <MoreHorizontal16Regular />
               </Button>
@@ -287,12 +288,12 @@ export default function ActivityItem(props: ActivityProps) {
               <DrawerFooter>
                 <Button onClick={Copy}>{t("copy")}</Button>
                 <div className="grid grid-cols-[1fr_auto] space-x-2">
-                  <DrawerClose>
+                  <DrawerClose asChild>
                     <Button className="w-full" variant="outline">
                       {t("close")}
                     </Button>
                   </DrawerClose>
-                  <DrawerClose>
+                  <DrawerClose asChild>
                     <Button
                       variant="outline"
                       onClick={() => removeActivityItem()}

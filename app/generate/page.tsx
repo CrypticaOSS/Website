@@ -638,7 +638,7 @@ export default function GeneratePage() {
               )}
               <div className="flex">
                 <Dialog>
-                  <DialogTrigger className="hidden sm:block">
+                  <DialogTrigger asChild className="hidden sm:block">
                     <Button variant="link" className="space-x-2">
                       <Add16Regular />
                       <span>{t("use-preset")}</span>
@@ -666,7 +666,7 @@ export default function GeneratePage() {
                         <div className="w-full">
                           {presets &&
                             presets.map((el, i) => (
-                              <Close key={i} className="w-full">
+                              <Close key={i} asChild className="w-full">
                                 <Button
                                   onClick={() => setSelectedPreset(el)}
                                   className="w-full font-semibold"
@@ -682,7 +682,7 @@ export default function GeneratePage() {
                   </DialogContent>
                 </Dialog>
                 <Drawer>
-                  <DrawerTrigger className="block sm:hidden">
+                  <DrawerTrigger asChild className="block sm:hidden">
                     <Button variant="link" className="space-x-2">
                       <Add16Regular />
                       <span>{t("use-preset")}</span>
@@ -709,7 +709,7 @@ export default function GeneratePage() {
                       <ScrollArea className="h-[350px]">
                         <div className="w-full">
                           {presets.map((el, i) => (
-                            <Close key={i} className="w-full">
+                            <Close key={i} asChild className="w-full">
                               <Button
                                 onClick={() => setSelectedPreset(el)}
                                 className="w-full font-semibold"
@@ -840,8 +840,8 @@ export default function GeneratePage() {
                       <Dialog>
                         <TooltipProvider>
                           <Tooltip>
-                            <TooltipTrigger>
-                              <DialogTrigger>
+                            <TooltipTrigger asChild>
+                              <DialogTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-10 w-10">
                                   <ArrowDownload20Regular className="h-5 w-5" />
                                 </Button>
@@ -1000,7 +1000,7 @@ export default function GeneratePage() {
                       />
                     </div>
                   </div>
-                  <DialogClose>
+                  <DialogClose asChild>
                     <Button
                       onClick={() => {
                         settings.openaiKey = apiKey

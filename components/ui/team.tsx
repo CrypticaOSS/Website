@@ -1,28 +1,20 @@
 import Image from "next/image"
 
-const leadership = [
+const Managers = [
   {
-    name: "Méschac Irung",
-    role: "Creator",
-    avatar: "https://avatars.githubusercontent.com/u/47919550?v=4",
+    name: "Connor2000024",
+    role: "Manager & Developer",
+    avatar: "/profiles/connor.png",
   },
-]
-
-const engineering = [
-  {
-    name: "Théo Balick",
-    role: "Frontend Dev",
-    avatar: "https://avatars.githubusercontent.com/u/68236786?v=4",
+   {
+    name: "Harley200317",
+    role: "Manager & Developer",
+    avatar: "/profiles/harley.webp",
   },
-  {
-    name: "Glodie Lukose",
-    role: "Frontend Dev",
-    avatar: "https://avatars.githubusercontent.com/u/99137927?v=4",
-  },
-  {
-    name: "Bernard Ngandu",
-    role: "Backend Dev",
-    avatar: "https://avatars.githubusercontent.com/u/31113941?v=4",
+     {
+    name: "Cxntrol",
+    role: "Manager & Developer",
+    avatar: "/profiles/cxntrol.jpg",
   },
 ]
 
@@ -68,14 +60,12 @@ export default function TeamSection() {
       <div className="mb-10 max-w-2xl">
         <h1 className="text-3xl font-bold sm:text-4xl">Our team</h1>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          The people building private, approachable tools for safer digital
-          lives.
+          A team dedicated to building private, secure tools for a safer digital experience.
         </p>
       </div>
 
       <div className="space-y-8">
-        <TeamGroup title="Leadership" members={leadership} />
-        <TeamGroup title="Engineering" members={engineering} />
+        <TeamGroup title="Managers" members={Managers} />
       </div>
     </section>
   )

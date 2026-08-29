@@ -91,7 +91,7 @@ export default function PresetsPage() {
       <div className="flex items-center space-x-2">
         {!isMobile ? (
           <Dialog>
-            <DialogTrigger>
+            <DialogTrigger asChild>
               <Button className="my-2 h-auto space-x-2 px-2 py-1 font-bold">
                 <Add16Regular />
                 <span>{t("create-preset")}</span>
@@ -331,7 +331,7 @@ export default function PresetsPage() {
                 />
               </div>
               <DialogFooter>
-                <Close>
+                <Close asChild>
                   <Button
                     disabled={!hasChars && !hasLower && !hasUpper && !hasNumber}
                     onClick={() => {
@@ -374,7 +374,7 @@ export default function PresetsPage() {
                     {t("create")}
                   </Button>
                 </Close>
-                <Close>
+                <Close asChild>
                   <Button variant="outline">{t("cancel")}</Button>
                 </Close>
               </DialogFooter>
@@ -382,7 +382,7 @@ export default function PresetsPage() {
           </Dialog>
         ) : (
           <Drawer>
-            <DrawerTrigger>
+            <DrawerTrigger asChild>
               <Button className="my-2 h-auto space-x-2 px-2 py-1 font-bold">
                 <Add16Regular />
                 <span>{t("create-preset")}</span>
@@ -631,7 +631,7 @@ export default function PresetsPage() {
               </div>
               <DrawerFooter>
                 <div className="flex items-center justify-center space-x-2">
-                  <DrawerClose>
+                  <DrawerClose asChild>
                     <Button
                       disabled={
                         !hasChars && !hasLower && !hasUpper && !hasNumber
@@ -676,7 +676,7 @@ export default function PresetsPage() {
                       {t("create")}
                     </Button>
                   </DrawerClose>
-                  <DrawerClose>
+                  <DrawerClose asChild>
                     <Button variant="outline">{t("cancel")}</Button>
                   </DrawerClose>
                 </div>
