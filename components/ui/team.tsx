@@ -2,19 +2,19 @@ import Image from "next/image"
 
 const Managers = [
   {
-    name: "Connor2000024",
+    name: "Connor",
     role: "Manager & Developer",
     avatar: "/profiles/connor.png",
   },
    {
-    name: "Harley200317",
+    name: "Harley",
     role: "Manager & Developer",
     avatar: "/profiles/harley.webp",
   },
      {
-    name: "Cxntrol",
+    name: "William",
     role: "Manager & Developer",
-    avatar: "/profiles/cxntrol.jpg",
+    avatar: "/profiles/william.jpg",
   },
 ]
 
