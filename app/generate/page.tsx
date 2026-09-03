@@ -20,6 +20,7 @@ import {
   LightbulbFilament48Regular,
   LockClosed20Regular,
   Settings20Regular,
+  ShieldLock20Regular,
   Sparkle20Regular,
 } from "@fluentui/react-icons"
 import { Close, DialogClose } from "@radix-ui/react-dialog"
@@ -77,6 +78,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+
+type BreachCheckState =
+  | { status: "idle"; count: 0 }
+  | { status: "checking"; count: 0 }
+  | { status: "safe"; count: 0 }
+  | { status: "pwned"; count: number }
+  | { status: "error"; count: 0 }
+
+const STRENGTH_RANGES = [
+  { min: 0, max: 29 },
+  { min: 30, max: 49 },
+  { min: 50, max: 69 },
+  { min: 70, max: 89 },
+  { min: 90, max: Number.POSITIVE_INFINITY },
+] as const
+
 export default function GeneratePage() {
   const { settings, setSettings } = useSettings()
 
@@ -88,11 +105,19 @@ export default function GeneratePage() {
   const [passwordStats, setPasswordStats] = useState(
     getStrengthInfo("")
   )
+  const [breachCheck, setBreachCheck] = useState<BreachCheckState>({
+    status: "idle",
+    count: 0,
+  })
 
   useEffect(() => {
-    const initialPassword = generatePasswordByStrength(2, settings.customChars)
-    setGeneratedPassword(initialPassword)
-    setPasswordStats(getStrengthInfo(initialPassword))
+    const initialPassword = generatePasswordMatchingStrength(
+      2,
+      settings.customChars
+    )
+    applyGeneratedPassword(initialPassword, false)
+    // We only want to regenerate when the custom character set changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.customChars])
 
   // Simple generator state
@@ -115,6 +140,152 @@ export default function GeneratePage() {
   const [isGeneratingAi, setIsGeneratingAi] = useState(false)
 
   const [csvSeparator, setCsvSeparator] = useState("colon")
+
+  /**
+   * Generate a password and verify that the resulting score actually lands in
+   * the strength band selected by the user.
+   *
+   * generatePasswordByStrength() decides the recipe; getStrengthInfo() verifies
+   * the result. We cap retries so this can never lock up the browser.
+   */
+  function generatePasswordMatchingStrength(
+    level: number,
+    customChars: Parameters<typeof generatePasswordByStrength>[1]
+  ) {
+    const target = STRENGTH_RANGES[level] ?? STRENGTH_RANGES[2]
+
+    let bestPassword = generatePasswordByStrength(level, customChars)
+    let bestStats = getStrengthInfo(bestPassword)
+
+    const distanceFromTarget = (score: number) => {
+      if (score < target.min) return target.min - score
+      if (score > target.max) return score - target.max
+      return 0
+    }
+
+    let bestDistance = distanceFromTarget(bestStats.entropy)
+
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = generatePasswordByStrength(level, customChars)
+      const stats = getStrengthInfo(candidate)
+      const distance = distanceFromTarget(stats.entropy)
+
+      if (distance === 0) {
+        return candidate
+      }
+
+      if (distance < bestDistance) {
+        bestPassword = candidate
+        bestStats = stats
+        bestDistance = distance
+      }
+    }
+
+    // The underlying generator may not be able to hit every exact band with
+    // every custom character configuration. Return the closest verified result.
+    return bestPassword
+  }
+
+  /**
+   * HIBP Pwned Passwords uses k-anonymity:
+   *  - SHA-1 is calculated locally.
+   *  - Only the first 5 hash characters are sent.
+   *  - The returned hash suffixes are compared locally.
+   *
+   * The plaintext password and complete hash never leave this browser.
+   */
+  async function checkPasswordExposure(password: string) {
+    if (!password || typeof window === "undefined" || !window.crypto?.subtle) {
+      setBreachCheck({ status: "idle", count: 0 })
+      return
+    }
+
+    setBreachCheck({ status: "checking", count: 0 })
+
+    try {
+      const bytes = new TextEncoder().encode(password)
+      const digest = await window.crypto.subtle.digest("SHA-1", bytes)
+      const hash = Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("")
+        .toUpperCase()
+
+      const prefix = hash.slice(0, 5)
+      const suffix = hash.slice(5)
+
+      const response = await fetch(
+        `https://api.pwnedpasswords.com/range/${prefix}`,
+        {
+          method: "GET",
+          headers: {
+            "Add-Padding": "true",
+          },
+          cache: "no-store",
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Pwned Passwords returned HTTP ${response.status}`)
+      }
+
+      const body = await response.text()
+      const match = body
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [hashSuffix, count] = line.split(":")
+          return {
+            suffix: hashSuffix?.toUpperCase(),
+            count: Number.parseInt(count ?? "0", 10) || 0,
+          }
+        })
+        .find((entry) => entry.suffix === suffix)
+
+      if (match && match.count > 0) {
+        setBreachCheck({
+          status: "pwned",
+          count: match.count,
+        })
+      } else {
+        setBreachCheck({
+          status: "safe",
+          count: 0,
+        })
+      }
+    } catch (error) {
+      console.error("[Cryptica] Pwned Passwords check failed:", error)
+      setBreachCheck({
+        status: "error",
+        count: 0,
+      })
+    }
+  }
+
+  function applyGeneratedPassword(password: string, trackActivity = true) {
+    setGeneratedPassword(password)
+    setPasswordStats(getStrengthInfo(password))
+
+    if (trackActivity) {
+      addActivity({
+        date: new Date(),
+        content: password,
+      })
+    }
+
+    void checkPasswordExposure(password)
+  }
+
+  function handleStrengthLevelChange(level: number) {
+    setStrengthLevel(level)
+
+    const password = generatePasswordMatchingStrength(
+      level,
+      settings.customChars
+    )
+
+    applyGeneratedPassword(password)
+  }
 
   // Get color based on score
   function getStrengthColor(score: number) {
@@ -164,10 +335,13 @@ export default function GeneratePage() {
   }
 
   function generateSimplePassword() {
-    const pwr = generatePasswordByStrength(strengthLevel, settings.customChars)
-    setGeneratedPassword(pwr)
-    setPasswordStats(getStrengthInfo(pwr))
-    addActivity({ date: new Date(), content: pwr })
+    const pwr = generatePasswordMatchingStrength(
+      strengthLevel,
+      settings.customChars
+    )
+
+    applyGeneratedPassword(pwr)
+
     toast(t("generated-title"), {
       description: t("generated-desc", { length: pwr.length }),
     })
@@ -216,8 +390,9 @@ export default function GeneratePage() {
         addActivity({ date: new Date(), content: pwr })
       }
       setGeneratedPasswords(passwords)
-      setGeneratedPassword(passwords[0] || "")
-      setPasswordStats(getStrengthInfo(passwords[0] || ""))
+      if (passwords[0]) {
+        applyGeneratedPassword(passwords[0], false)
+      }
     } else {
       const pwr = selectedPreset
         ? generatePasswordUsingPreset(selectedPreset, settings.customChars)
@@ -229,9 +404,7 @@ export default function GeneratePage() {
             passwordLength,
             settings.customChars
           )
-      setGeneratedPassword(pwr)
-      setPasswordStats(getStrengthInfo(pwr))
-      addActivity({ date: new Date(), content: pwr })
+      applyGeneratedPassword(pwr)
       toast(t("generated-title"), {
         description: t("generated-desc", { length: pwr.length }),
       })
@@ -305,21 +478,21 @@ export default function GeneratePage() {
         <div className="mx-auto w-full max-w-2xl mb-8">
           <TabsList className="w-full">
             <TabsTrigger value="simple" className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-primary/20 to-purple-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-blue-500/10 via-primary/20 to-purple-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
               <div className="flex items-center justify-center gap-2 relative z-10">
                 <CheckmarkCircle20Regular className="h-5 w-5" />
                 <p className="font-medium">{t("simple")}</p>
               </div>
             </TabsTrigger>
             <TabsTrigger value="advanced" className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-primary/20 to-red-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-orange-500/10 via-primary/20 to-red-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
               <div className="flex items-center justify-center gap-2 relative z-10">
                 <Settings20Regular className="h-5 w-5" />
                 <p className="font-medium">{t("advanced")}</p>
               </div>
             </TabsTrigger>
             <TabsTrigger value="ai" className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-primary/20 to-violet-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-purple-500/10 via-primary/20 to-violet-500/10 opacity-0 group-data-[state=active]:opacity-100 transition-opacity rounded-full blur-sm"></div>
               <div className="flex items-center justify-center gap-2 relative z-10">
                 <BrainCircuit20Regular className="h-5 w-5" />
                 <p className="font-medium">{t("ai")}</p>
@@ -332,10 +505,10 @@ export default function GeneratePage() {
           value="simple"
         >
           <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-xl"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-xl"></div>
             <CardHeader className="pb-4 relative z-10">
               <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-blue-500 to-primary rounded-full p-1.5">
+                <div className="bg-linear-to-br from-blue-500 to-primary rounded-full p-1.5">
                   <LockClosed20Regular className="h-5 w-5 text-white" />
                 </div>
                 <CardTitle className="text-2xl">{t("simple")}</CardTitle>
@@ -423,7 +596,9 @@ export default function GeneratePage() {
                   min={0}
                   max={4}
                   step={1}
-                  onValueChange={(value) => setStrengthLevel(value[0])}
+                  onValueChange={(value) =>
+                    handleStrengthLevelChange(value[0])
+                  }
                   className="py-4"
                 />
                 <div className="grid grid-cols-5 text-center text-xs text-muted-foreground">
@@ -459,6 +634,82 @@ export default function GeneratePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Independent compromised-password check */}
+              <div
+                className={`rounded-xl border p-4 ${
+                  breachCheck.status === "pwned"
+                    ? "border-destructive/30 bg-destructive/5"
+                    : breachCheck.status === "safe"
+                      ? "border-emerald-500/25 bg-emerald-500/5"
+                      : "border-border/70 bg-muted/30"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg ${
+                      breachCheck.status === "pwned"
+                        ? "bg-destructive/10 text-destructive"
+                        : breachCheck.status === "safe"
+                          ? "bg-emerald-500/10 text-emerald-500"
+                          : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    <ShieldLock20Regular className="size-5" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold">
+                        Compromised password check
+                      </p>
+
+                      {breachCheck.status === "checking" && (
+                        <div className="size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      )}
+                    </div>
+
+                    {breachCheck.status === "checking" && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Checking the generated password against known breach
+                        data…
+                      </p>
+                    )}
+
+                    {breachCheck.status === "safe" && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        No match was found in the Pwned Passwords data set.
+                        Only the first 5 characters of a local SHA-1 hash were
+                        sent.
+                      </p>
+                    )}
+
+                    {breachCheck.status === "pwned" && (
+                      <p className="mt-1 text-sm text-destructive">
+                        This password has appeared in known breach data{" "}
+                        {breachCheck.count.toLocaleString()} time
+                        {breachCheck.count === 1 ? "" : "s"}. Generate another
+                        one.
+                      </p>
+                    )}
+
+                    {breachCheck.status === "error" && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        The breach check could not be completed. The local
+                        strength score is still available.
+                      </p>
+                    )}
+
+                    {breachCheck.status === "idle" && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Cryptica can check generated passwords against known
+                        compromised passwords without sending the plaintext
+                        password.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </CardContent>
             <CardFooter className="pt-2 pb-6 relative z-10">
               <Button
@@ -466,7 +717,7 @@ export default function GeneratePage() {
                 className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
                 size="lg"
               >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500 via-primary to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <span className="absolute inset-0 w-full h-full bg-linear-to-r from-blue-500 via-primary to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                 <ArrowClockwise20Regular className="h-5 w-5 relative z-10" />
                 <span className="relative z-10">{t("generate-new-password")}</span>
               </Button>
@@ -478,10 +729,10 @@ export default function GeneratePage() {
           value="advanced"
         >
           <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-500/5 rounded-xl"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-orange-500/5 via-transparent to-red-500/5 rounded-xl"></div>
             <CardHeader className="pb-4 relative z-10">
               <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-orange-500 to-primary rounded-full p-1.5">
+                <div className="bg-linear-to-br from-orange-500 to-primary rounded-full p-1.5">
                   <Settings20Regular className="h-5 w-5 text-white" />
                 </div>
                 <CardTitle className="text-2xl">{t("advanced")}</CardTitle>
@@ -662,7 +913,7 @@ export default function GeneratePage() {
                         </Link>
                       </div>
                     ) : (
-                      <ScrollArea className="h-[350px]">
+                      <ScrollArea className="h-87.5">
                         <div className="w-full">
                           {presets &&
                             presets.map((el, i) => (
@@ -706,7 +957,7 @@ export default function GeneratePage() {
                         </Link>
                       </div>
                     ) : (
-                      <ScrollArea className="h-[350px]">
+                      <ScrollArea className="h-87.5">
                         <div className="w-full">
                           {presets.map((el, i) => (
                             <Close key={i} asChild className="w-full">
@@ -916,7 +1167,7 @@ export default function GeneratePage() {
                             <td className="px-4 py-3 text-sm font-medium">
                               #{index + 1}
                             </td>
-                            <td className="max-w-[300px] truncate px-4 py-3 font-mono text-sm">
+                            <td className="max-w-75 truncate px-4 py-3 font-mono text-sm">
                               {showPassword
                                 ? password
                                 : "•".repeat(password.length)}
@@ -950,7 +1201,7 @@ export default function GeneratePage() {
                 className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
                 size="lg"
               >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-orange-500 via-primary to-red-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <span className="absolute inset-0 w-full h-full bg-linear-to-r from-orange-500 via-primary to-red-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                 <ArrowClockwise20Regular className="h-5 w-5 relative z-10" />
                 <span className="relative z-10">{t("generate-new-password")}</span>
               </Button>
@@ -965,8 +1216,8 @@ export default function GeneratePage() {
           settings.openaiKey == undefined ||
           (settings.openaiKey == "" && !showAI) ? (
             <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card/50 backdrop-blur-sm max-w-md mx-auto shadow-lg border-0 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-violet-500/5 rounded-xl"></div>
-              <div className="bg-gradient-to-br from-purple-500 to-primary rounded-full p-4 relative z-10">
+              <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 via-transparent to-violet-500/5 rounded-xl"></div>
+              <div className="bg-linear-to-br from-purple-500 to-primary rounded-full p-4 relative z-10">
                 <LightbulbFilament48Regular className="h-16 w-16 text-white" />
               </div>
               <h2 className="text-center text-3xl font-bold relative z-10">
@@ -976,11 +1227,11 @@ export default function GeneratePage() {
               <Dialog>
                 <DialogTrigger asChild>
                   <Button className="mt-4 py-6 px-8 text-base font-medium relative overflow-hidden group z-10">
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    <span className="absolute inset-0 w-full h-full bg-linear-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     <span className="relative z-10">{t("set-api-key")}</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-106.25">
                   <DialogHeader>
                     <DialogTitle>{t("set-api-key")}</DialogTitle>
                     <DialogDescription>
@@ -1015,7 +1266,7 @@ export default function GeneratePage() {
                       }}
                       className="w-full py-6 text-base font-medium relative overflow-hidden group"
                     >
-                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                      <span className="absolute inset-0 w-full h-full bg-linear-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                       <span className="relative z-10">{t("save")}</span>
                     </Button>
                   </DialogClose>
@@ -1024,10 +1275,10 @@ export default function GeneratePage() {
             </div>
           ) : (
             <Card className="w-full shadow-lg border-0 bg-card/50 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-violet-500/5 rounded-xl"></div>
+              <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 via-transparent to-violet-500/5 rounded-xl"></div>
               <CardHeader className="pb-4 relative z-10">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="bg-gradient-to-br from-purple-500 to-primary rounded-full p-1.5">
+                  <div className="bg-linear-to-br from-purple-500 to-primary rounded-full p-1.5">
                     <BrainCircuit20Regular className="h-5 w-5 text-white" />
                   </div>
                   <CardTitle className="text-2xl">{t("ai")}</CardTitle>
@@ -1062,9 +1313,9 @@ export default function GeneratePage() {
                     <Button
                       onClick={generateAiPassword}
                       disabled={isGeneratingAi || !promptText.trim()}
-                      className="flex-shrink-0 h-12 px-6 relative overflow-hidden group"
+                      className="shrink-0 h-12 px-6 relative overflow-hidden group"
                     >
-                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                      <span className="absolute inset-0 w-full h-full bg-linear-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                       {isGeneratingAi ? (
                         <>
                           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent relative z-10" />
@@ -1098,7 +1349,7 @@ export default function GeneratePage() {
                           key={index}
                           className="relative overflow-hidden bg-secondary/30 backdrop-blur-sm dark:bg-primary-foreground/5 flex items-center justify-between rounded-xl p-4 transition-all hover:bg-secondary/50 dark:hover:bg-primary-foreground/10 border border-transparent hover:border-primary/20"
                         >
-                          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-primary/5 opacity-0 hover:opacity-100 transition-opacity"></div>
+                          <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 via-transparent to-primary/5 opacity-0 hover:opacity-100 transition-opacity"></div>
                           <div className="space-y-1 relative z-10">
                             <div className="font-mono text-lg">
                               {showPassword
@@ -1120,11 +1371,10 @@ export default function GeneratePage() {
                               size="sm"
                               className="h-10 px-4 font-medium relative overflow-hidden group"
                               onClick={() => {
-                                setGeneratedPassword(password)
-                                setPasswordStats(getStrengthInfo(password))
+                                applyGeneratedPassword(password, false)
                               }}
                             >
-                              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500/20 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                              <span className="absolute inset-0 w-full h-full bg-linear-to-r from-purple-500/20 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                               <span className="relative z-10">{t("select")}</span>
                             </Button>
                             <Button
@@ -1268,7 +1518,7 @@ export default function GeneratePage() {
                   className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
                   size="lg"
                 >
-                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                  <span className="absolute inset-0 w-full h-full bg-linear-to-r from-purple-500 via-primary to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                   {isGeneratingAi ? (
                     <>
                       <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent relative z-10" />

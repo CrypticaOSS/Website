@@ -7,6 +7,8 @@ import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import { ThemeProvider } from "next-themes"
 
+import { AuthProvider } from "@/components/auth-provider"
+import { Footer } from "@/components/footer"
 import { AppSidebar } from "@/components/nav"
 import {
   SidebarInset,
@@ -14,7 +16,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
-import { Footer } from "@/components/footer"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,39 +30,45 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Cryptica",
-    template: "%s | Cryptica"
+    template: "%s | Cryptica",
   },
   description: "Life’s messy. Your passwords don’t have to be.",
   applicationName: "Cryptica",
   metadataBase: new URL("https://crypticapp.org"),
+
   openGraph: {
     siteName: "Cryptica",
     description: "Life’s messy. Your passwords don’t have to be.",
     images: ["/images/social.png"],
     creators: ["@crypticaapp", "@codemeapixel"],
     locale: "en-US",
-    url: "https://crypticapp.org"
+    url: "https://crypticapp.org",
   },
+
   twitter: {
     title: "Cryptica",
     description: "Life’s messy. Your passwords don’t have to be.",
     images: "/images/social.png",
     creator: "@CodeMeAPixel",
     card: "summary_large_image",
-    site: "https://crypticapp.org"
+    site: "https://crypticapp.org",
   },
+
   appleWebApp: {
     statusBarStyle: "black-translucent",
     title: "Cryptica",
   },
+
   formatDetection: {
     telephone: false,
   },
+
   icons: {
     icon: "/favicon.ico",
     shortcut: "/images/icons/icon-72x72.png",
-    apple: "/images/icons/icon-96x96.png"
+    apple: "/images/icons/icon-96x96.png",
   },
+
   robots: {
     index: true,
     follow: true,
@@ -69,13 +76,15 @@ export const metadata: Metadata = {
       index: true,
       follow: true,
       "max-snippet": -1,
-      "max-video-preview": -1
-    }
+      "max-video-preview": -1,
+    },
   },
+
   other: {
-    "mobile-web-app-capable": "yes"
+    "mobile-web-app-capable": "yes",
   },
 }
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -87,35 +96,72 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/images/icon-512x512.png" />
+        <link
+          rel="apple-touch-icon"
+          href="/images/icon-512x512.png"
+        />
+
         <meta
           name="theme-color"
           content="#ffffff"
           media="(prefers-color-scheme: light)"
         />
+
         <meta
           name="theme-color"
           content="#000014"
           media="(prefers-color-scheme: dark)"
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-indigo-100 via-teal-50 to-teal-200 dark:from-[#232946] dark:via-[#2d2d44] dark:to-[#3a3a5d]`}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <NextIntlClientProvider>
-            <SidebarProvider>
-              <AppSidebar />
 
-              <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                  <SidebarTrigger className="-ml-1" />
-                </header>
-                <div className="p-5 flex-1">{children}</div>
-                <Footer />
-              </SidebarInset>
-            </SidebarProvider>
-            <Toaster />
+      <body
+        className={`
+          ${geistSans.variable}
+          ${geistMono.variable}
+          min-h-screen
+          bg-linear-to-br
+          from-indigo-100
+          via-teal-50
+          to-teal-200
+          antialiased
+          dark:from-[#232946]
+          dark:via-[#2d2d44]
+          dark:to-[#3a3a5d]
+        `}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+        >
+          <NextIntlClientProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <AppSidebar />
+
+                <SidebarInset>
+                  <header
+                    className="
+                      flex h-16 shrink-0
+                      items-center gap-2
+                      border-b border-border/60
+                      bg-background/60 px-4
+                      backdrop-blur-xl
+                    "
+                  >
+                    <SidebarTrigger className="-ml-1" />
+                  </header>
+
+                  <main className="flex-1 p-5">
+                    {children}
+                  </main>
+
+                  <Footer />
+                </SidebarInset>
+              </SidebarProvider>
+
+              <Toaster />
+            </AuthProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>
