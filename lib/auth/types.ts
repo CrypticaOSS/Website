@@ -28,6 +28,8 @@ export type LoginResult =
   | {
       ok: true
       session: AuthSession
+      token: string
+      maxAge: number
     }
   | {
       ok: false
@@ -36,8 +38,7 @@ export type LoginResult =
 
 export interface AuthProvider {
   login(
-    credentials:
-      LoginCredentials,
+    credentials: LoginCredentials,
   ): Promise<LoginResult>
 
   getSession(
