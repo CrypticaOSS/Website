@@ -1,0 +1,445 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  SUPPORT
+  ADMIN
+  OWNER
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  EXPIRED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+  LIFETIME
+}
+
+enum AuditEventType {
+  ACCOUNT_CREATED
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGED
+  EMAIL_CHANGED
+  PROFILE_UPDATED
+  TWO_FACTOR_ENABLED
+  TWO_FACTOR_DISABLED
+  RECOVERY_CODE_USED
+  SESSION_REVOKED
+  VAULT_ITEM_CREATED
+  VAULT_ITEM_UPDATED
+  VAULT_ITEM_DELETED
+  VAULT_EXPORTED
+  SUBSCRIPTION_STARTED
+  SUBSCRIPTION_CHANGED
+  SUBSCRIPTION_CANCELED
+}
+
+enum VaultItemType {
+  LOGIN
+  SECURE_NOTE
+  CARD
+  IDENTITY
+  API_KEY
+  WIFI
+  SSH_KEY
+  OTHER
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  name  String?
+  email String  @unique
+  image String?
+
+  role UserRole @default(USER)
+
+  emailVerifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  credentials             Credential?
+  sessions                Session[]
+  vaults                  Vault[]
+  presets                 PasswordPreset[]
+  auditEvents             AuditEvent[]
+  subscriptions           Subscription[]
+  billingCustomer         BillingCustomer?
+  twoFactor               TwoFactor?
+  recoveryCodes           RecoveryCode[]
+  trustedDevices          TrustedDevice[]
+  emailVerificationTokens EmailVerificationToken[]
+  breachMonitors          BreachMonitor[]
+
+  @@index([createdAt])
+}
+
+model EmailVerificationToken {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Never store the raw verification token.
+  tokenHash String @unique
+
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+//
+// Authentication
+//
+
+model Credential {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  passwordHash String
+
+  passwordChangedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Store SHA-256(token), never the raw session token.
+  tokenHash String @unique
+
+  expiresAt DateTime
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, revokedAt])
+}
+
+//
+// Vault encryption
+//
+
+model Vault {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name String @default("My Vault")
+
+  // Key-encryption material.
+  //
+  // This is encrypted vault-key material only.
+  // Never store the user's decrypted vault key here.
+  encryptedVaultKey Bytes
+  vaultKeyNonce     Bytes
+
+  // KDF parameters used to derive the wrapping key.
+  kdfSalt        Bytes
+  kdfAlgorithm   String @default("argon2id")
+  kdfIterations  Int?
+  kdfMemory      Int?
+  kdfParallelism Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items VaultItem[]
+
+  @@index([userId])
+}
+
+model VaultItem {
+  id String @id @default(uuid()) @db.Uuid
+
+  vaultId String @db.Uuid
+  vault   Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  type VaultItemType @default(LOGIN)
+
+  // Authenticated encrypted payload containing sensitive item data.
+  ciphertext Bytes
+  nonce      Bytes
+
+  // Optional if your AEAD implementation stores the authentication
+  // tag separately instead of appending it to ciphertext.
+  authTag Bytes?
+
+  version Int @default(1)
+
+  // Only keep this plaintext if you're happy for the DB to reveal it.
+  favorite Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([vaultId])
+  @@index([vaultId, deletedAt])
+  @@index([vaultId, updatedAt])
+}
+
+//
+// Password generator presets
+//
+
+model PasswordPreset {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name String
+
+  length Int @default(20)
+
+  includeUppercase Boolean @default(true)
+  includeLowercase Boolean @default(true)
+  includeNumbers   Boolean @default(true)
+  includeSymbols   Boolean @default(true)
+
+  excludeAmbiguous Boolean @default(false)
+
+  customCharacters String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+//
+// Two-factor authentication
+//
+
+model TwoFactor {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enabled Boolean @default(false)
+
+  // Encrypt the TOTP secret before storing it.
+  encryptedSecret Bytes?
+  secretNonce     Bytes?
+  authTag         Bytes?
+
+  enabledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RecoveryCode {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Store only a hash of each recovery code.
+  codeHash String @unique
+
+  usedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, usedAt])
+}
+
+model TrustedDevice {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name String?
+
+  // Store only the token hash.
+  tokenHash String @unique
+
+  userAgent String?
+  ipAddress String?
+
+  lastUsedAt DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+//
+// Security / activity
+//
+
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  type AuditEventType
+
+  ipAddress String?
+  userAgent String?
+
+  // Non-sensitive information only.
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
+
+//
+// Premium / subscriptions
+//
+
+model Plan {
+  id String @id @default(uuid()) @db.Uuid
+
+  code String @unique
+
+  name        String
+  description String?
+
+  active Boolean @default(true)
+
+  billingInterval BillingInterval
+
+  // Integer minor units:
+  // £4.99 = 499
+  priceMinor Int
+
+  currency String @default("GBP")
+
+  stripePriceId String? @unique
+
+  // Non-secret entitlement configuration.
+  //
+  // Example:
+  // {
+  //   "vaultItems": 5000,
+  //   "devices": 10,
+  //   "breachMonitoring": true,
+  //   "secureSharing": true
+  // }
+  features Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model BillingCustomer {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId String @db.Uuid
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  status SubscriptionStatus
+
+  provider String @default("stripe")
+
+  providerSubscriptionId String? @unique
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+
+  cancelAtPeriodEnd Boolean @default(false)
+
+  canceledAt  DateTime?
+  trialEndsAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@index([userId, status])
+}
+
+//
+// Breach monitoring
+//
+
+model BreachMonitor {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Encrypt monitored identifiers where appropriate.
+  encryptedIdentifier Bytes
+  nonce               Bytes
+  authTag             Bytes?
+
+  enabled Boolean @default(true)
+
+  lastCheckedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, enabled])
+}
