@@ -15,7 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN DATABASE_URL=postgresql://prisma:prisma@localhost:5432/prisma bunx prisma generate
-RUN bun run build
+RUN DATABASE_URL=postgresql://prisma:prisma@localhost:5432/prisma bun run build
 
 # ---- Runtime ----
 FROM base AS runner
