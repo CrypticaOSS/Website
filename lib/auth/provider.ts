@@ -1,65 +1,228 @@
 import "server-only"
 
+import crypto from "node:crypto"
+import argon2 from "argon2"
+
 import { AUTH_MODE } from "@/lib/auth/config"
-import type { LoginCredentials, LoginResult } from "@/lib/auth/types"
+import type {
+  LoginCredentials,
+  LoginResult,
+} from "@/lib/auth/types"
+
 import {
   createMockLogin,
   deleteMockSession,
   getMockSession,
 } from "@/lib/auth/mock-store"
 
-export async function loginWithProvider(credentials: LoginCredentials) {
-  if (AUTH_MODE === "mock") {
-    return createMockLogin(credentials)
-  }
+import { prisma } from "@/lib/prisma"
 
-  /**
-   * PRODUCTION AUTH GOES HERE.
-   *
-   * Keep this function's return contract identical and your frontend does not
-   * need to change.
-   *
-   * Examples:
-   * - verify an Argon2 password against a Prisma user record
-   * - call an external identity service
-   * - create a Redis/database-backed session
-   *
-   * Return:
-   * {
-   *   ok: true,
-   *   session: { user, expiresAt },
-   *   token: "...",
-   *   maxAge: 2592000
-   * }
-   */
-  throw new Error(
-    "AUTH_MODE=production is enabled but the production auth provider has not been configured."
-  )
+const SESSION_TTL_SECONDS =
+  60 * 60 * 8
+
+const REMEMBER_SESSION_TTL_SECONDS =
+  60 * 60 * 24 * 30
+
+function generateSessionToken() {
+  return crypto
+    .randomBytes(32)
+    .toString("base64url")
 }
 
-export async function getSessionWithProvider(token: string) {
-  if (AUTH_MODE === "mock") {
-    return getMockSession(token)
-  }
-
-  /**
-   * Replace this with your production session lookup.
-   */
-  throw new Error(
-    "AUTH_MODE=production is enabled but the production auth provider has not been configured."
-  )
+function hashSessionToken(
+  token: string
+) {
+  return crypto
+    .createHash("sha256")
+    .update(token, "utf8")
+    .digest("hex")
 }
 
-export async function logoutWithProvider(token: string) {
+export async function loginWithProvider(
+  credentials: LoginCredentials
+): Promise<LoginResult> {
   if (AUTH_MODE === "mock") {
-    await deleteMockSession(token)
+    return createMockLogin(
+      credentials
+    )
+  }
+
+  const email =
+    credentials.email
+      .trim()
+      .toLowerCase()
+
+  const user =
+    await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      include: {
+        credential: true,
+      },
+    })
+
+  if (
+    !user ||
+    !user.credential
+  ) {
+    return {
+      ok: false,
+      error:
+        "Invalid email or password.",
+    }
+  }
+
+  const passwordValid =
+    await argon2.verify(
+      user.credential.passwordHash,
+      credentials.password
+    )
+
+  if (!passwordValid) {
+    return {
+      ok: false,
+      error:
+        "Invalid email or password.",
+    }
+  }
+
+  const token =
+    generateSessionToken()
+
+  const tokenHash =
+    hashSessionToken(token)
+
+  const ttl =
+    credentials.rememberMe
+      ? REMEMBER_SESSION_TTL_SECONDS
+      : SESSION_TTL_SECONDS
+
+  const expiresAt =
+    new Date(
+      Date.now() +
+        ttl * 1000
+    )
+
+  await prisma.session.create({
+    data: {
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    },
+  })
+
+  return {
+    ok: true,
+
+    token,
+
+    maxAge: ttl,
+
+    session: {
+      user: {
+        id: user.id,
+        email: user.email,
+        name:
+          user.name ?? null,
+        image:
+          user.image ?? null,
+        role: user.role,
+      },
+
+      expiresAt:
+        expiresAt.toISOString(),
+    },
+  }
+}
+
+export async function getSessionWithProvider(
+  token: string
+) {
+  if (AUTH_MODE === "mock") {
+    return getMockSession(
+      token
+    )
+  }
+
+  const tokenHash =
+    hashSessionToken(token)
+
+  const session =
+    await prisma.session.findUnique({
+      where: {
+        tokenHash,
+      },
+
+      include: {
+        user: true,
+      },
+    })
+
+  if (!session) {
+    return null
+  }
+
+  if (
+    session.expiresAt <=
+    new Date()
+  ) {
+    await prisma.session
+      .delete({
+        where: {
+          id: session.id,
+        },
+      })
+      .catch(() => undefined)
+
+    return null
+  }
+
+  return {
+    user: {
+      id:
+        session.user.id,
+
+      email:
+        session.user.email,
+
+      name:
+        session.user.name ??
+        null,
+
+      image:
+        session.user.image ??
+        null,
+
+      role:
+        session.user.role,
+    },
+
+    expiresAt:
+      session.expiresAt
+        .toISOString(),
+  }
+}
+
+export async function logoutWithProvider(
+  token: string
+) {
+  if (AUTH_MODE === "mock") {
+    await deleteMockSession(
+      token
+    )
+
     return
   }
 
-  /**
-   * Replace this with your production session deletion/revocation.
-   */
-  throw new Error(
-    "AUTH_MODE=production is enabled but the production auth provider has not been configured."
-  )
+  const tokenHash =
+    hashSessionToken(token)
+
+  await prisma.session
+    .delete({
+      where: {
+        tokenHash,
+      },
+    })
+    .catch(() => undefined)
 }
