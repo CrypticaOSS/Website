@@ -21,6 +21,30 @@ type PresetBody = {
   special?: RangeConfig
 }
 
+type PresetRecord = {
+  id: string
+  name: string
+  length: number
+  lowerIncluded: boolean
+  lowerMin: number
+  lowerMax: number
+  lowerUseRange: boolean
+  upperIncluded: boolean
+  upperMin: number
+  upperMax: number
+  upperUseRange: boolean
+  numberIncluded: boolean
+  numberMin: number
+  numberMax: number
+  numberUseRange: boolean
+  specialIncluded: boolean
+  specialMin: number
+  specialMax: number
+  specialUseRange: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 function parseInteger(
   value: unknown,
   fallback: number,
@@ -83,7 +107,7 @@ export async function GET() {
       )
     }
 
-    const presets =
+    const presets: PresetRecord[] =
       await prisma.passwordPreset.findMany({
         where: {
           userId: session.user.id,
