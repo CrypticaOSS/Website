@@ -33,6 +33,7 @@ enum AuditEventType {
   LOGIN_SUCCESS
   LOGIN_FAILED
   LOGOUT
+  PASSWORD_GENERATED
   PASSWORD_CHANGED
   EMAIL_CHANGED
   PROFILE_UPDATED
@@ -223,23 +224,32 @@ model PasswordPreset {
   userId String @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name String
+  name   String
+  length Int
 
-  length Int @default(20)
+  lowerIncluded Boolean @default(false)
+  lowerMin      Int     @default(0)
+  lowerMax      Int     @default(10)
+  lowerUseRange Boolean @default(false)
 
-  includeUppercase Boolean @default(true)
-  includeLowercase Boolean @default(true)
-  includeNumbers   Boolean @default(true)
-  includeSymbols   Boolean @default(true)
+  upperIncluded Boolean @default(false)
+  upperMin      Int     @default(0)
+  upperMax      Int     @default(10)
+  upperUseRange Boolean @default(false)
 
-  excludeAmbiguous Boolean @default(false)
+  numberIncluded Boolean @default(false)
+  numberMin      Int     @default(0)
+  numberMax      Int     @default(10)
+  numberUseRange Boolean @default(false)
 
-  customCharacters String?
+  specialIncluded Boolean @default(false)
+  specialMin      Int     @default(0)
+  specialMax      Int     @default(10)
+  specialUseRange Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, name])
   @@index([userId])
 }
 
