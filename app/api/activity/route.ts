@@ -22,6 +22,23 @@ type CreateActivityBody = {
   source?: unknown
 }
 
+type ActivityRecord = {
+  id: string
+  type: string
+  metadata: unknown
+  createdAt: Date
+}
+
+function isRecord(
+  value: unknown,
+): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value)
+  )
+}
+
 function isValidActivityType(
   value: unknown,
 ): value is ActivityType {
@@ -65,7 +82,7 @@ export async function GET() {
       )
     }
 
-    const activities =
+    const activities: ActivityRecord[] =
       await prisma.auditEvent.findMany({
         where: {
           userId:
@@ -96,15 +113,11 @@ export async function GET() {
     const items =
       activities.map(
         (activity) => {
-          const metadata =
-            activity.metadata &&
-            typeof activity.metadata ===
-              "object" &&
-            !Array.isArray(
-              activity.metadata,
-            )
-              ? activity.metadata
-              : {}
+          const metadata = isRecord(
+            activity.metadata,
+          )
+            ? activity.metadata
+            : {}
 
           return {
             id:
