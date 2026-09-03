@@ -61,11 +61,19 @@ enum VaultItemType {
   OTHER
 }
 
+enum DeviceAuthorizationStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CONSUMED
+  EXPIRED
+}
+
 model User {
   id String @id @default(uuid()) @db.Uuid
 
   name  String?
-  email String  @unique
+  email String @unique
   image String?
 
   role UserRole @default(USER)
@@ -87,6 +95,10 @@ model User {
   trustedDevices          TrustedDevice[]
   emailVerificationTokens EmailVerificationToken[]
   breachMonitors          BreachMonitor[]
+
+  // External API / desktop application authentication.
+  refreshTokens        RefreshToken[]
+  deviceAuthorizations DeviceAuthorization[]
 
   @@index([createdAt])
 }
@@ -141,13 +153,91 @@ model Session {
   ipAddress String?
   userAgent String?
 
-  createdAt  DateTime  @default(now())
-  lastSeenAt DateTime  @default(now())
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
   revokedAt  DateTime?
 
   @@index([userId])
   @@index([expiresAt])
   @@index([userId, revokedAt])
+}
+
+//
+// External API / device authentication
+//
+
+model RefreshToken {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Store SHA-256(refresh token), never the raw token.
+  tokenHash String @unique
+
+  // Identifies the client using the token.
+  // Example: "cryptica-desktop"
+  clientId String
+
+  // OAuth-style scopes granted to this token.
+  //
+  // Examples:
+  // user:read
+  // vault:read
+  // vault:write
+  // settings:read
+  // settings:write
+  scopes String[]
+
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([expiresAt])
+  @@index([userId, revokedAt])
+}
+
+model DeviceAuthorization {
+  id String @id @default(uuid()) @db.Uuid
+
+  // The long device code is kept by the desktop client.
+  // Only its SHA-256 hash is stored in the database.
+  deviceCodeHash String @unique
+
+  // Short human-readable code shown to the user.
+  //
+  // Example:
+  // F8KD-42PQ
+  userCode String @unique
+
+  // Example:
+  // cryptica-desktop
+  clientId String
+
+  scopes String[]
+
+  status DeviceAuthorizationStatus @default(PENDING)
+
+  // Null until the logged-in website user approves the request.
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+
+  // Used to enforce the minimum polling interval.
+  lastPolledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userCode])
+  @@index([clientId])
+  @@index([expiresAt])
+  @@index([status])
+  @@index([userId])
 }
 
 //
@@ -205,8 +295,8 @@ model VaultItem {
   // Only keep this plaintext if you're happy for the DB to reveal it.
   favorite Boolean @default(false)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
   @@index([vaultId])
@@ -307,7 +397,7 @@ model TrustedDevice {
   userAgent String?
   ipAddress String?
 
-  lastUsedAt DateTime  @default(now())
+  lastUsedAt DateTime @default(now())
   expiresAt  DateTime
   revokedAt  DateTime?
 
@@ -368,14 +458,6 @@ model Plan {
   stripePriceId String? @unique
 
   // Non-secret entitlement configuration.
-  //
-  // Example:
-  // {
-  //   "vaultItems": 5000,
-  //   "devices": 10,
-  //   "breachMonitoring": true,
-  //   "secureSharing": true
-  // }
   features Json?
 
   createdAt DateTime @default(now())
