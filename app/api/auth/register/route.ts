@@ -5,6 +5,7 @@ import {
 
 import argon2 from "argon2"
 import { NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 
 import {
   AUTH_COOKIE_NAME,
@@ -324,15 +325,11 @@ export async function POST(
      * ------------------------------------------------------------
      * Create account
      * ------------------------------------------------------------
-     *
-     * Let Prisma infer the transaction client type.
-     *
-     * Do NOT manually type `tx`.
      */
 
     const user =
       await prisma.$transaction(
-        async (tx) => {
+        async (tx: Prisma.TransactionClient) => {
           return tx.user.create({
             data: {
               name,
