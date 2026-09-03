@@ -14,6 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+RUN DATABASE_URL=postgresql://admin:GYi3Hkq5730ysPA@5.9.220.49:6381/main bunx prisma generate
 RUN bun run build
 
 # ---- Runtime ----
