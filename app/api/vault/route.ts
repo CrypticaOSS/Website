@@ -22,6 +22,16 @@ type CreateVaultEntryBody = {
   notes?: unknown
 }
 
+type VaultItemRecord = {
+  id: string
+  ciphertext: Uint8Array
+  nonce: Uint8Array
+  authTag: Uint8Array | null
+  favorite: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 function cleanString(
   value: unknown,
 ) {
@@ -48,7 +58,7 @@ export async function GET() {
       )
     }
 
-    const items =
+    const items: VaultItemRecord[] =
       await prisma.vaultItem.findMany({
         where: {
           vault: {
