@@ -1,757 +1,1303 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { usePresets } from "@/hooks/use-presets"
 import {
-  Add16Regular,
-  List20Regular,
-  ListBar20Regular,
-} from "@fluentui/react-icons"
-import { Close } from "@radix-ui/react-dialog"
-import { useTranslations } from "next-intl"
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 
-import { PasswordPreset } from "@/lib/password"
-import PresetItem from "@/components/preset-item"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import {
+  Download,
+  FileJson,
+  FolderCog,
+  Loader2,
+  Plus,
+  Save,
+  Settings2,
+  ShieldCheck,
+  SlidersHorizontal,
+  Trash2,
+  Upload,
+} from "lucide-react"
+
+import { toast } from "sonner"
+
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
+
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 
-export default function PresetsPage() {
-  const t = useTranslations()
-  const isMobile = useIsMobile()
-  const [hasUpper, setHasUpper] = useState(false)
-  const [hasLower, setHasLower] = useState(false)
-  const [hasNumber, setHasNumber] = useState(false)
-  const [hasChars, setHasChars] = useState(false)
-  const [length, setLength] = useState(12)
+type RangeConfig = {
+  included: boolean
+  min: number
+  max: number
+  useRange: boolean
+}
 
-  const [minLower, setMinLower] = useState(0)
-  const [maxLower, setMaxLower] = useState(10)
-  const [useLowerRange, setUseLowerRange] = useState(false)
+type PasswordPreset = {
+  id: string
 
-  const [minUpper, setMinUpper] = useState(0)
-  const [maxUpper, setMaxUpper] = useState(10)
-  const [useUpperRange, setUseUpperRange] = useState(false)
+  name: string
+  length: number
 
-  const [minDigits, setMinDigits] = useState(0)
-  const [maxDigits, setMaxDigits] = useState(10)
-  const [useDigitsRange, setUseDigitsRange] = useState(false)
+  lowerCases: RangeConfig
+  upperCases: RangeConfig
+  numbers: RangeConfig
+  special: RangeConfig
 
-  const [minSpecial, setMinSpecial] = useState(0)
-  const [maxSpecial, setMaxSpecial] = useState(10)
-  const [useSpecialRange, setUseSpecialRange] = useState(false)
+  createdAt?: string
+  updatedAt?: string
+}
 
-  const [presetName, setPresetName] = useState("My preset")
+type PresetForm = {
+  name: string
+  length: number
 
-  const { presets, setPresets } = usePresets()
+  lowerCases: RangeConfig
+  upperCases: RangeConfig
+  numbers: RangeConfig
+  special: RangeConfig
+}
 
-  function importPresets(event: React.ChangeEvent<HTMLInputElement>) {
-    if (!event.target.files) return // check if files are selected
-    if (event.target.files.length === 0) return // check if no files are selected
-    const file = event.target.files[0] // get the selected file
-    const reader = new FileReader() // create a FileReader object
-    reader.onload = function (event) {
-      const text: string = event.target?.result as string // get the file content as text
-      const json: PasswordPreset[] = JSON.parse(text) // parse the text as JSON
+const EMPTY_RANGE: RangeConfig = {
+  included: false,
+  min: 0,
+  max: 10,
+  useRange: false,
+}
 
-      const merge = [...presets, ...json]
-      setPresets(merge)
-    }
-    reader.readAsText(file) // read the file as text
+function createEmptyForm(): PresetForm {
+  return {
+    name: "My preset",
+
+    length: 16,
+
+    lowerCases: {
+      ...EMPTY_RANGE,
+      included: true,
+    },
+
+    upperCases: {
+      ...EMPTY_RANGE,
+      included: true,
+    },
+
+    numbers: {
+      ...EMPTY_RANGE,
+      included: true,
+    },
+
+    special: {
+      ...EMPTY_RANGE,
+    },
   }
-  return (
-    <main>
-      <div className="mb-2 flex items-center space-x-2">
-        <List20Regular primaryFill="#0088FF" className="text-white" />
-        <p className="ml-2 font-bold">{t("presets")}</p>
-      </div>
-      <div className="flex items-center space-x-2">
-        {!isMobile ? (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="my-2 h-auto space-x-2 px-2 py-1 font-bold">
-                <Add16Regular />
-                <span>{t("create-preset")}</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="gap-1">
-              <DialogHeader>
-                <DialogTitle>{t("new-preset")}</DialogTitle>
-              </DialogHeader>{" "}
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="NameTxt">{t("name")}</Label>
-                <Input
-                  defaultValue={presetName}
-                  onChange={(e) => setPresetName(e.target.value)}
-                  value={presetName}
-                  className="h-auto px-2 py-1"
-                  id="NameTxt"
-                />
-              </div>
-              <Card className="space-y-2 rounded-md">
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="LowerChk"
-                      onCheckedChange={setHasLower}
-                      defaultChecked={hasLower}
-                    />
-                    <Label htmlFor="LowerChk">{t("lowercases")}</Label>
-                  </div>
-                  {hasLower ? (
-                    <div>
-                      <div className="flex items-center space-x-2 py-2">
-                        <Checkbox
-                          onCheckedChange={() =>
-                            setUseLowerRange(!useLowerRange)
-                          }
-                          id="LowerCaseRange"
-                        ></Checkbox>
-                        <Label htmlFor="LowerCaseRange">{t("use-range")}</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="">{t("min")}</Label>
-                        <Input
-                          disabled={!useLowerRange}
-                          defaultValue={minLower}
-                          onChange={(e) =>
-                            setMinLower(parseInt(e.target.value))
-                          }
-                          value={minLower}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                        <Label htmlFor="">{t("max")}</Label>
-                        <Input
-                          disabled={!useLowerRange}
-                          defaultValue={maxLower}
-                          onChange={(e) =>
-                            setMaxLower(parseInt(e.target.value))
-                          }
-                          value={maxLower}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <></>
-                  )}
-                </CardContent>
-              </Card>
-              <Card className="rounded-md">
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      onCheckedChange={setHasUpper}
-                      defaultChecked={hasUpper}
-                      id="UpperChk"
-                    />
-                    <Label htmlFor="UpperChk">{t("uppercases")}</Label>
-                  </div>
-                  {hasUpper ? (
-                    <div>
-                      <div className="flex items-center space-x-2 py-2">
-                        <Checkbox
-                          onCheckedChange={() =>
-                            setUseUpperRange(!useUpperRange)
-                          }
-                          id="UpperCaseRange"
-                        ></Checkbox>
-                        <Label htmlFor="UpperCaseRange">{t("use-range")}</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="">{t("min")}</Label>
-                        <Input
-                          disabled={!useUpperRange}
-                          defaultValue={minUpper}
-                          onChange={(e) =>
-                            setMinUpper(parseInt(e.target.value))
-                          }
-                          value={minUpper}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                        <Label htmlFor="">{t("max")}</Label>
-                        <Input
-                          disabled={!useUpperRange}
-                          defaultValue={maxUpper}
-                          onChange={(e) =>
-                            setMaxUpper(parseInt(e.target.value))
-                          }
-                          value={maxUpper}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <></>
-                  )}
-                </CardContent>
-              </Card>
-              <Card className="rounded-md">
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      onCheckedChange={setHasNumber}
-                      defaultChecked={hasNumber}
-                      id="NbrChk"
-                    />
-                    <Label htmlFor="NbrChk">{t("nbrs")}</Label>
-                  </div>
-                  {hasNumber ? (
-                    <div>
-                      <div className="flex items-center space-x-2 py-2">
-                        <Checkbox
-                          onCheckedChange={() =>
-                            setUseDigitsRange(!useDigitsRange)
-                          }
-                          id="DigitsCaseRange"
-                        ></Checkbox>
-                        <Label htmlFor="DigitsCaseRange">
-                          {t("use-range")}
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="">{t("min")}</Label>
-                        <Input
-                          disabled={!useDigitsRange}
-                          defaultValue={minDigits}
-                          onChange={(e) =>
-                            setMinDigits(parseInt(e.target.value))
-                          }
-                          value={minDigits}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                        <Label htmlFor="">{t("max")}</Label>
-                        <Input
-                          disabled={!useDigitsRange}
-                          defaultValue={maxDigits}
-                          onChange={(e) =>
-                            setMaxDigits(parseInt(e.target.value))
-                          }
-                          value={maxDigits}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <></>
-                  )}
-                </CardContent>
-              </Card>
-              <Card className="rounded-md">
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="SpecialChk"
-                      onCheckedChange={setHasChars}
-                      defaultChecked={hasChars}
-                    />
-                    <Label htmlFor="SpecialChk">{t("specialchars")}</Label>
-                  </div>
-                  {hasChars ? (
-                    <div>
-                      <div className="flex items-center space-x-2 py-2">
-                        <Checkbox
-                          onCheckedChange={() =>
-                            setUseSpecialRange(!useSpecialRange)
-                          }
-                          id="SpecialCaseRange"
-                        ></Checkbox>
-                        <Label htmlFor="SpecialCaseRange">
-                          {t("use-range")}
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="">{t("min")}</Label>
-                        <Input
-                          disabled={!useSpecialRange}
-                          defaultValue={minSpecial}
-                          onChange={(e) =>
-                            setMinSpecial(parseInt(e.target.value))
-                          }
-                          value={minSpecial}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                        <Label htmlFor="">{t("max")}</Label>
-                        <Input
-                          disabled={!useSpecialRange}
-                          defaultValue={maxSpecial}
-                          onChange={(e) =>
-                            setMaxSpecial(parseInt(e.target.value))
-                          }
-                          value={maxSpecial}
-                          type="number"
-                          className="h-auto px-2 py-1"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <></>
-                  )}
-                </CardContent>
-              </Card>
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="LengthTxt">{t("length")}</Label>
-                <Input
-                  defaultValue={length}
-                  onChange={(e) => setLength(parseInt(e.target.value))}
-                  value={length}
-                  type="number"
-                  className="h-auto px-2 py-1"
-                  id="LengthTxt"
-                />
-              </div>
-              <DialogFooter>
-                <Close asChild>
-                  <Button
-                    disabled={!hasChars && !hasLower && !hasUpper && !hasNumber}
-                    onClick={() => {
-                      if (!hasChars && !hasLower && !hasUpper && !hasNumber)
-                        return
-                      const newPresets = [
-                        ...presets,
-                        {
-                          name: presetName,
-                          lowerCases: {
-                            included: hasLower,
-                            min: minLower,
-                            max: maxLower,
-                            useRange: useLowerRange,
-                          },
-                          upperCases: {
-                            included: hasUpper,
-                            min: minUpper,
-                            max: maxUpper,
-                            useRange: useUpperRange,
-                          },
-                          numbers: {
-                            included: hasNumber,
-                            min: minDigits,
-                            max: maxDigits,
-                            useRange: useDigitsRange,
-                          },
-                          special: {
-                            included: hasChars,
-                            min: minSpecial,
-                            max: maxSpecial,
-                            useRange: useSpecialRange,
-                          },
-                          length: length,
-                        },
-                      ]
-                      setPresets(newPresets)
-                    }}
-                  >
-                    {t("create")}
-                  </Button>
-                </Close>
-                <Close asChild>
-                  <Button variant="outline">{t("cancel")}</Button>
-                </Close>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        ) : (
-          <Drawer>
-            <DrawerTrigger asChild>
-              <Button className="my-2 h-auto space-x-2 px-2 py-1 font-bold">
-                <Add16Regular />
-                <span>{t("create-preset")}</span>
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="space-y-2 px-2">
-              <DrawerHeader>
-                <DrawerTitle>{t("new-preset")}</DrawerTitle>
-              </DrawerHeader>
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="NameTxt">{t("name")}</Label>
-                <Input
-                  defaultValue={presetName}
-                  onChange={(e) => setPresetName(e.target.value)}
-                  value={presetName}
-                  className="h-auto px-2 py-1"
-                  id="NameTxt"
-                />
-              </div>
-              <ScrollArea className="h-[350px]">
-                <div className="space-y-2">
-                  <Card className="space-y-2 rounded-md">
-                    <CardContent>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="LowerChk"
-                          onCheckedChange={setHasLower}
-                          defaultChecked={hasLower}
-                        />
-                        <Label htmlFor="LowerChk">{t("lowercases")}</Label>
-                      </div>
-                      {hasLower ? (
-                        <div>
-                          <div className="flex items-center space-x-2 py-2">
-                            <Checkbox
-                              onCheckedChange={() =>
-                                setUseLowerRange(!useLowerRange)
-                              }
-                              id="LowerCaseRange"
-                            ></Checkbox>
-                            <Label htmlFor="LowerCaseRange">
-                              {t("use-range")}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Label htmlFor="">{t("min")}</Label>
-                            <Input
-                              disabled={!useLowerRange}
-                              defaultValue={minLower}
-                              onChange={(e) =>
-                                setMinLower(parseInt(e.target.value))
-                              }
-                              value={minLower}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                            <Label htmlFor="">{t("max")}</Label>
-                            <Input
-                              disabled={!useLowerRange}
-                              defaultValue={maxLower}
-                              onChange={(e) =>
-                                setMaxLower(parseInt(e.target.value))
-                              }
-                              value={maxLower}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <></>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-md">
-                    <CardContent>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          onCheckedChange={setHasUpper}
-                          defaultChecked={hasUpper}
-                          id="UpperChk"
-                        />
-                        <Label htmlFor="UpperChk">{t("uppercases")}</Label>
-                      </div>
-                      {hasUpper ? (
-                        <div>
-                          <div className="flex items-center space-x-2 py-2">
-                            <Checkbox
-                              onCheckedChange={() =>
-                                setUseUpperRange(!useUpperRange)
-                              }
-                              id="UpperCaseRange"
-                            ></Checkbox>
-                            <Label htmlFor="UpperCaseRange">
-                              {t("use-range")}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Label htmlFor="">{t("min")}</Label>
-                            <Input
-                              disabled={!useUpperRange}
-                              defaultValue={minUpper}
-                              onChange={(e) =>
-                                setMinUpper(parseInt(e.target.value))
-                              }
-                              value={minUpper}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                            <Label htmlFor="">{t("max")}</Label>
-                            <Input
-                              disabled={!useUpperRange}
-                              defaultValue={maxUpper}
-                              onChange={(e) =>
-                                setMaxUpper(parseInt(e.target.value))
-                              }
-                              value={maxUpper}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <></>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-md">
-                    <CardContent>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          onCheckedChange={setHasNumber}
-                          defaultChecked={hasNumber}
-                          id="NbrChk"
-                        />
-                        <Label htmlFor="NbrChk">{t("nbrs")}</Label>
-                      </div>
-                      {hasNumber ? (
-                        <div>
-                          <div className="flex items-center space-x-2 py-2">
-                            <Checkbox
-                              onCheckedChange={() =>
-                                setUseDigitsRange(!useDigitsRange)
-                              }
-                              id="DigitsCaseRange"
-                            ></Checkbox>
-                            <Label htmlFor="DigitsCaseRange">
-                              {t("use-range")}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Label htmlFor="">{t("min")}</Label>
-                            <Input
-                              disabled={!useDigitsRange}
-                              defaultValue={minDigits}
-                              onChange={(e) =>
-                                setMinDigits(parseInt(e.target.value))
-                              }
-                              value={minDigits}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                            <Label htmlFor="">{t("max")}</Label>
-                            <Input
-                              disabled={!useDigitsRange}
-                              defaultValue={maxDigits}
-                              onChange={(e) =>
-                                setMaxDigits(parseInt(e.target.value))
-                              }
-                              value={maxDigits}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <></>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-md">
-                    <CardContent>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="SpecialChk"
-                          onCheckedChange={setHasChars}
-                          defaultChecked={hasChars}
-                        />
-                        <Label htmlFor="SpecialChk">{t("specialchars")}</Label>
-                      </div>
-                      {hasChars ? (
-                        <div>
-                          <div className="flex items-center space-x-2 py-2">
-                            <Checkbox
-                              onCheckedChange={() =>
-                                setUseSpecialRange(!useSpecialRange)
-                              }
-                              id="SpecialCaseRange"
-                            ></Checkbox>
-                            <Label htmlFor="SpecialCaseRange">
-                              {t("use-range")}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Label htmlFor="">{t("min")}</Label>
-                            <Input
-                              disabled={!useSpecialRange}
-                              defaultValue={minSpecial}
-                              onChange={(e) =>
-                                setMinSpecial(parseInt(e.target.value))
-                              }
-                              value={minSpecial}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                            <Label htmlFor="">{t("max")}</Label>
-                            <Input
-                              disabled={!useSpecialRange}
-                              defaultValue={maxSpecial}
-                              onChange={(e) =>
-                                setMaxSpecial(parseInt(e.target.value))
-                              }
-                              value={maxSpecial}
-                              type="number"
-                              className="h-auto px-2 py-1"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <></>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </ScrollArea>
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="LengthTxt">{t("length")}</Label>
-                <Input
-                  defaultValue={length}
-                  onChange={(e) => setLength(parseInt(e.target.value))}
-                  value={length}
-                  type="number"
-                  className="h-auto px-2 py-1"
-                  id="LengthTxt"
-                />
-              </div>
-              <DrawerFooter>
-                <div className="flex items-center justify-center space-x-2">
-                  <DrawerClose asChild>
-                    <Button
-                      disabled={
-                        !hasChars && !hasLower && !hasUpper && !hasNumber
-                      }
-                      onClick={() => {
-                        if (!hasChars && !hasLower && !hasUpper && !hasNumber)
-                          return
-                        const newPresets = [
-                          ...presets,
-                          {
-                            name: presetName,
-                            lowerCases: {
-                              included: hasLower,
-                              min: minLower,
-                              max: maxLower,
-                              useRange: useLowerRange,
-                            },
-                            upperCases: {
-                              included: hasUpper,
-                              min: minUpper,
-                              max: maxUpper,
-                              useRange: useUpperRange,
-                            },
-                            numbers: {
-                              included: hasNumber,
-                              min: minDigits,
-                              max: maxDigits,
-                              useRange: useDigitsRange,
-                            },
-                            special: {
-                              included: hasChars,
-                              min: minSpecial,
-                              max: maxSpecial,
-                              useRange: useSpecialRange,
-                            },
-                            length: length,
-                          },
-                        ]
-                        setPresets(newPresets)
-                      }}
-                    >
-                      {t("create")}
-                    </Button>
-                  </DrawerClose>
-                  <DrawerClose asChild>
-                    <Button variant="outline">{t("cancel")}</Button>
-                  </DrawerClose>
-                </div>
-              </DrawerFooter>
-            </DrawerContent>
-          </Drawer>
-        )}
-        {presets.length > 0 && (
-          <Link
-            className={buttonVariants({
-              variant: "outline",
-              size: "nav",
-              className: "text-center",
-            })}
-            href={
-              "data:text/plain;charset=UTF-8," +
-              encodeURIComponent(
-                typeof window !== "undefined"
-                  ? (localStorage.getItem("passliss-presets") ?? "[]")
-                  : "{msg: 'an error occurred'}"
-              )
-            }
-            download={"passliss-presets.json"}
-          >
-            {t("export")}
-          </Link>
-        )}
-        <Button
-          variant="outline"
-          size="nav"
-          onClick={() =>
-            (
-              document.getElementById("FileSelector") as HTMLInputElement
-            ).click()
+}
+
+export default function PresetsPage() {
+  const [
+    presets,
+    setPresets,
+  ] =
+    useState<PasswordPreset[]>([])
+
+  const [
+    form,
+    setForm,
+  ] =
+    useState<PresetForm>(
+      createEmptyForm,
+    )
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(true)
+
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false)
+
+  const [
+    createOpen,
+    setCreateOpen,
+  ] =
+    useState(false)
+
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] =
+    useState<PasswordPreset | null>(
+      null,
+    )
+
+  const [
+    deleting,
+    setDeleting,
+  ] =
+    useState(false)
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(
+      null,
+    )
+
+  const loadPresets =
+    useCallback(
+      async () => {
+        setLoading(true)
+
+        try {
+          const response =
+            await fetch(
+              "/api/presets",
+              {
+                credentials:
+                  "include",
+
+                cache:
+                  "no-store",
+              },
+            )
+
+          const data =
+            await response.json()
+
+          if (
+            response.status ===
+            401
+          ) {
+            window.location.href =
+              "/login?callbackUrl=/presets"
+
+            return
           }
-        >
-          {t("import")}
-        </Button>
-        <Input
-          type="file"
-          id="FileSelector"
-          accept="application/json"
-          className="hidden"
-          onChange={importPresets}
-        ></Input>
-      </div>
-      <div className="mb-2 flex items-center space-x-2">
-        <ListBar20Regular primaryFill="#0088FF" className="text-white" />
-        <p className="ml-2 font-bold">{t("my-presets")}</p>
-      </div>
-      <div className="flex flex-wrap">
-        {presets && presets.length === 0 && (
-          <div className="mt-10 flex w-full flex-col items-center justify-center text-center">
-            <p className="icon text-7xl">{"\uFD81"}</p>
-            <h4 className="text-xl font-bold">{t("no-activity")}</h4>
-            <p>{t("no-presets-desc")}</p>
+
+          if (!response.ok) {
+            throw new Error(
+              data.error ??
+                "Unable to load presets.",
+            )
+          }
+
+          setPresets(
+            Array.isArray(
+              data.presets,
+            )
+              ? data.presets
+              : [],
+          )
+        } catch (error) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Unable to load presets.",
+          )
+        } finally {
+          setLoading(false)
+        }
+      },
+      [],
+    )
+
+  useEffect(() => {
+    void loadPresets()
+  }, [
+    loadPresets,
+  ])
+
+  const presetCount =
+    presets.length
+
+  const averageLength =
+    useMemo(() => {
+      if (
+        presets.length ===
+        0
+      ) {
+        return 0
+      }
+
+      return Math.round(
+        presets.reduce(
+          (
+            total,
+            preset,
+          ) =>
+            total +
+            preset.length,
+          0,
+        ) /
+          presets.length,
+      )
+    }, [
+      presets,
+    ])
+
+  function updateRange(
+    key:
+      | "lowerCases"
+      | "upperCases"
+      | "numbers"
+      | "special",
+
+    patch:
+      Partial<RangeConfig>,
+  ) {
+    setForm(
+      (current) => ({
+        ...current,
+
+        [key]: {
+          ...current[key],
+          ...patch,
+        },
+      }),
+    )
+  }
+
+  async function createPreset(
+    event:
+      FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    if (
+      !form.name.trim()
+    ) {
+      toast.error(
+        "Enter a preset name.",
+      )
+
+      return
+    }
+
+    if (
+      !form.lowerCases
+        .included &&
+      !form.upperCases
+        .included &&
+      !form.numbers
+        .included &&
+      !form.special
+        .included
+    ) {
+      toast.error(
+        "Select at least one character type.",
+      )
+
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const response =
+        await fetch(
+          "/api/presets",
+          {
+            method: "POST",
+
+            credentials:
+              "include",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(
+                form,
+              ),
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to create preset.",
+        )
+      }
+
+      setPresets(
+        (current) => [
+          data.preset,
+          ...current,
+        ],
+      )
+
+      setForm(
+        createEmptyForm(),
+      )
+
+      setCreateOpen(
+        false,
+      )
+
+      toast.success(
+        "Preset saved to your account.",
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to create preset.",
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deletePreset() {
+    if (!deleteTarget) {
+      return
+    }
+
+    setDeleting(true)
+
+    try {
+      const response =
+        await fetch(
+          `/api/presets/${deleteTarget.id}`,
+          {
+            method:
+              "DELETE",
+
+            credentials:
+              "include",
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to delete preset.",
+        )
+      }
+
+      setPresets(
+        (current) =>
+          current.filter(
+            (preset) =>
+              preset.id !==
+              deleteTarget.id,
+          ),
+      )
+
+      toast.success(
+        `${deleteTarget.name} deleted.`,
+      )
+
+      setDeleteTarget(
+        null,
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete preset.",
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  function exportPresets() {
+    const safePresets =
+      presets.map(
+        ({
+          id: _id,
+          createdAt: _createdAt,
+          updatedAt: _updatedAt,
+          ...preset
+        }) => preset,
+      )
+
+    const blob =
+      new Blob(
+        [
+          JSON.stringify(
+            safePresets,
+            null,
+            2,
+          ),
+        ],
+        {
+          type:
+            "application/json",
+        },
+      )
+
+    const url =
+      URL.createObjectURL(
+        blob,
+      )
+
+    const link =
+      document.createElement(
+        "a",
+      )
+
+    link.href =
+      url
+
+    link.download =
+      "cryptica-presets.json"
+
+    document.body.appendChild(
+      link,
+    )
+
+    link.click()
+    link.remove()
+
+    URL.revokeObjectURL(
+      url,
+    )
+
+    toast.success(
+      "Presets exported.",
+    )
+  }
+
+  async function importPresets(
+    event:
+      ChangeEvent<HTMLInputElement>,
+  ) {
+    const file =
+      event.target.files?.[0]
+
+    event.target.value =
+      ""
+
+    if (!file) {
+      return
+    }
+
+    try {
+      const text =
+        await file.text()
+
+      const parsed =
+        JSON.parse(text)
+
+      if (
+        !Array.isArray(
+          parsed,
+        )
+      ) {
+        throw new Error(
+          "Preset file must contain an array.",
+        )
+      }
+
+      let imported = 0
+
+      for (
+        const item of
+        parsed
+      ) {
+        const response =
+          await fetch(
+            "/api/presets",
+            {
+              method:
+                "POST",
+
+              credentials:
+                "include",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  item,
+                ),
+            },
+          )
+
+        if (
+          response.ok
+        ) {
+          imported++
+        }
+      }
+
+      await loadPresets()
+
+      if (
+        imported === 0
+      ) {
+        toast.error(
+          "No valid presets were imported.",
+        )
+
+        return
+      }
+
+      toast.success(
+        `${imported} ${
+          imported === 1
+            ? "preset"
+            : "presets"
+        } imported.`,
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to import presets.",
+      )
+    }
+  }
+
+  return (
+    <>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Hero */}
+
+        <section className="relative overflow-hidden rounded-2xl border bg-card px-6 py-7 shadow-sm sm:px-8">
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent" />
+
+          <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
+
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                <SlidersHorizontal className="size-3.5 text-primary" />
+
+                Password generator presets
+              </div>
+
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Your presets
+              </h1>
+
+              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+                Save your favourite password generation configurations and use
+                them again whenever you need them.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border bg-background/50 px-4 py-3">
+                <p className="text-xl font-bold">
+                  {presetCount}
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  Saved presets
+                </p>
+              </div>
+
+              <div className="rounded-xl border bg-background/50 px-4 py-3">
+                <p className="text-xl font-bold">
+                  {averageLength ||
+                    "—"}
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  Avg. length
+                </p>
+              </div>
+            </div>
           </div>
-        )}
-        {presets.map((el: PasswordPreset, i: number) => (
-          <PresetItem
-            id={i}
-            key={i}
-            preset={el}
-            delete={() => {
-              presets.splice(i, 1)
-              setPresets([...presets])
-            }}
-            edit={(preset: PasswordPreset) => {
-              const p = presets
-              p[i] = preset
-              setPresets([...p])
-            }}
-          />
-        ))}
+        </section>
+
+        {/* Toolbar */}
+
+        <section className="mt-6 flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-semibold">
+              Preset library
+            </h2>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              Synced securely with your Cryptica account.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
+            >
+              <Upload className="size-4" />
+
+              Import
+            </Button>
+
+            <input
+              ref={
+                fileInputRef
+              }
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={
+                importPresets
+              }
+            />
+
+            <Button
+              variant="outline"
+              disabled={
+                presets.length ===
+                0
+              }
+              onClick={
+                exportPresets
+              }
+            >
+              <Download className="size-4" />
+
+              Export
+            </Button>
+
+            <Button
+              onClick={() =>
+                setCreateOpen(
+                  true,
+                )
+              }
+            >
+              <Plus className="size-4" />
+
+              New preset
+            </Button>
+          </div>
+        </section>
+
+        {/* Privacy/status */}
+
+        <div className="mt-4 flex items-start gap-3 rounded-xl border bg-muted/25 p-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <ShieldCheck className="size-4 text-primary" />
+          </div>
+
+          <div>
+            <p className="text-sm font-medium">
+              Account synced
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Presets contain generator configuration only. They never contain
+              generated passwords or vault credentials.
+            </p>
+          </div>
+        </div>
+
+        {/* List */}
+
+        <section className="mt-6">
+          {loading ? (
+            <div className="flex min-h-72 items-center justify-center rounded-2xl border bg-card">
+              <div className="text-center">
+                <Loader2 className="mx-auto size-6 animate-spin text-primary" />
+
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Loading presets...
+                </p>
+              </div>
+            </div>
+          ) : presets.length ===
+            0 ? (
+            <div className="rounded-2xl border border-dashed bg-card/50 px-6 py-16 text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+                <FolderCog className="size-6 text-primary" />
+              </div>
+
+              <h3 className="mt-5 font-semibold">
+                No presets yet
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                Create a preset to save a password generation configuration to
+                your Cryptica account.
+              </p>
+
+              <Button
+                className="mt-6"
+                onClick={() =>
+                  setCreateOpen(
+                    true,
+                  )
+                }
+              >
+                <Plus className="size-4" />
+
+                Create your first preset
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {presets.map(
+                (preset) => (
+                  <PresetCard
+                    key={
+                      preset.id
+                    }
+                    preset={
+                      preset
+                    }
+                    onDelete={() =>
+                      setDeleteTarget(
+                        preset,
+                      )
+                    }
+                  />
+                ),
+              )}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* Create preset */}
+
+      <Dialog
+        open={
+          createOpen
+        }
+        onOpenChange={
+          setCreateOpen
+        }
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <form
+            onSubmit={
+              createPreset
+            }
+          >
+            <DialogHeader>
+              <DialogTitle>
+                Create password preset
+              </DialogTitle>
+
+              <DialogDescription>
+                Save a reusable configuration for the Cryptica password
+                generator.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-6 space-y-6">
+              <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
+                <div className="space-y-2">
+                  <Label htmlFor="preset-name">
+                    Name
+                  </Label>
+
+                  <Input
+                    id="preset-name"
+                    value={
+                      form.name
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setForm(
+                        (
+                          current,
+                        ) => ({
+                          ...current,
+
+                          name:
+                            event
+                              .target
+                              .value,
+                        }),
+                      )
+                    }
+                    maxLength={
+                      100
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="preset-length">
+                    Length
+                  </Label>
+
+                  <Input
+                    id="preset-length"
+                    type="number"
+                    min={
+                      4
+                    }
+                    max={
+                      4096
+                    }
+                    value={
+                      form.length
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setForm(
+                        (
+                          current,
+                        ) => ({
+                          ...current,
+
+                          length:
+                            Number(
+                              event
+                                .target
+                                .value,
+                            ),
+                        }),
+                      )
+                    }
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <CharacterSection
+                  title="Lowercase letters"
+                  description="Include a–z"
+                  value={
+                    form.lowerCases
+                  }
+                  onChange={(
+                    patch,
+                  ) =>
+                    updateRange(
+                      "lowerCases",
+                      patch,
+                    )
+                  }
+                />
+
+                <CharacterSection
+                  title="Uppercase letters"
+                  description="Include A–Z"
+                  value={
+                    form.upperCases
+                  }
+                  onChange={(
+                    patch,
+                  ) =>
+                    updateRange(
+                      "upperCases",
+                      patch,
+                    )
+                  }
+                />
+
+                <CharacterSection
+                  title="Numbers"
+                  description="Include 0–9"
+                  value={
+                    form.numbers
+                  }
+                  onChange={(
+                    patch,
+                  ) =>
+                    updateRange(
+                      "numbers",
+                      patch,
+                    )
+                  }
+                />
+
+                <CharacterSection
+                  title="Special characters"
+                  description="Include symbols and punctuation"
+                  value={
+                    form.special
+                  }
+                  onChange={(
+                    patch,
+                  ) =>
+                    updateRange(
+                      "special",
+                      patch,
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  saving
+                }
+                onClick={() =>
+                  setCreateOpen(
+                    false,
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={
+                  saving
+                }
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+
+                    Save preset
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+
+      <Dialog
+        open={
+          Boolean(
+            deleteTarget,
+          )
+        }
+        onOpenChange={(
+          open,
+        ) => {
+          if (
+            !open &&
+            !deleting
+          ) {
+            setDeleteTarget(
+              null,
+            )
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Delete preset?
+            </DialogTitle>
+
+            <DialogDescription>
+              {deleteTarget
+                ? `"${deleteTarget.name}" will be permanently removed from your Cryptica account.`
+                : "This preset will be permanently removed."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={
+                deleting
+              }
+              onClick={() =>
+                setDeleteTarget(
+                  null,
+                )
+              }
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              disabled={
+                deleting
+              }
+              onClick={() =>
+                void deletePreset()
+              }
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+
+                  Delete preset
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function CharacterSection({
+  title,
+  description,
+  value,
+  onChange,
+}: {
+  title: string
+  description: string
+
+  value:
+    RangeConfig
+
+  onChange: (
+    patch:
+      Partial<RangeConfig>,
+  ) => void
+}) {
+  return (
+    <div className="rounded-xl border bg-muted/15 p-4">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <Label className="text-sm font-medium">
+            {title}
+          </Label>
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            {description}
+          </p>
+        </div>
+
+        <Switch
+          checked={
+            value.included
+          }
+          onCheckedChange={(
+            checked,
+          ) =>
+            onChange({
+              included:
+                checked,
+            })
+          }
+        />
       </div>
-    </main>
+
+      {value.included && (
+        <div className="mt-4 border-t pt-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={
+                value.useRange
+              }
+              onCheckedChange={(
+                checked,
+              ) =>
+                onChange({
+                  useRange:
+                    checked ===
+                    true,
+                })
+              }
+            />
+
+            <Label className="text-xs">
+              Require a minimum/maximum amount
+            </Label>
+          </div>
+
+          {value.useRange && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  Minimum
+                </Label>
+
+                <Input
+                  type="number"
+                  min={
+                    0
+                  }
+                  value={
+                    value.min
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    onChange({
+                      min:
+                        Math.max(
+                          0,
+                          Number(
+                            event
+                              .target
+                              .value,
+                          ),
+                        ),
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  Maximum
+                </Label>
+
+                <Input
+                  type="number"
+                  min={
+                    value.min
+                  }
+                  value={
+                    value.max
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    onChange({
+                      max:
+                        Math.max(
+                          value.min,
+                          Number(
+                            event
+                              .target
+                              .value,
+                          ),
+                        ),
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PresetCard({
+  preset,
+  onDelete,
+}: {
+  preset:
+    PasswordPreset
+
+  onDelete:
+    () => void
+}) {
+  const types = [
+    preset.lowerCases
+      .included &&
+      "Lowercase",
+
+    preset.upperCases
+      .included &&
+      "Uppercase",
+
+    preset.numbers
+      .included &&
+      "Numbers",
+
+    preset.special
+      .included &&
+      "Symbols",
+  ].filter(
+    Boolean,
+  ) as string[]
+
+  return (
+    <article className="group overflow-hidden rounded-2xl border bg-card shadow-sm transition-colors hover:border-primary/20">
+      <div className="flex items-start justify-between gap-3 border-b bg-muted/15 p-5">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <Settings2 className="size-5 text-primary" />
+          </div>
+
+          <div className="min-w-0">
+            <h3 className="truncate font-semibold">
+              {preset.name}
+            </h3>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              {preset.length} character password
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={
+            onDelete
+          }
+          className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+
+      <div className="p-5">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Included
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {types.map(
+            (type) => (
+              <span
+                key={
+                  type
+                }
+                className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {type}
+              </span>
+            ),
+          )}
+        </div>
+
+        <div className="mt-5 flex items-center gap-2 border-t pt-4 text-xs text-muted-foreground">
+          <FileJson className="size-3.5 text-primary" />
+
+          Account preset
+        </div>
+      </div>
+    </article>
   )
 }
