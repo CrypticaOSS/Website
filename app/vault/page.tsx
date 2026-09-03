@@ -802,7 +802,7 @@ export default function VaultPage() {
                 <AlertTriangle className="mx-auto size-8 text-destructive" />
 
                 <h3 className="mt-4 font-semibold">
-                  Couldn't load your vault
+                  Couldn&apos;t load your vault
                 </h3>
 
                 <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">

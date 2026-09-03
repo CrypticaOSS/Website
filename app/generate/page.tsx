@@ -117,7 +117,6 @@ export default function GeneratePage() {
     )
     applyGeneratedPassword(initialPassword, false)
     // We only want to regenerate when the custom character set changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.customChars])
 
   // Simple generator state

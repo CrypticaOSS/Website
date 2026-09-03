@@ -273,6 +273,7 @@
   "breaches-tool-check": "Vérifier les fuites",
   "breaches-tool-loading": "Vérification...",
   "breaches-tool-found": "Ce mot de passe a été trouvé dans {count} fuites de données !",
+  "pricing": "Tarifs",
   "breaches-tool-not-found": "Ce mot de passe n'a PAS été trouvé dans des fuites connues.",
   "breaches-tool-error": "Échec de la vérification du mot de passe. Réessayez plus tard.",
   "showcase": "Cryptica en Action",

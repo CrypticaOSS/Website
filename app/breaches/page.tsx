@@ -742,8 +742,8 @@ export default function BreachesPage() {
                         }
                         title="No known exposure found"
                       >
-                        This password wasn't found in the compromised-password
-                        corpus. That doesn't guarantee it is safe, so it should
+                        This password wasn&apos;t found in the compromised-password
+                        corpus. That doesn&apos;t guarantee it is safe, so it should
                         still be strong and unique.
                       </ResultBox>
                     )}
@@ -796,8 +796,8 @@ export default function BreachesPage() {
               </div>
 
               <div className="rounded-2xl border bg-muted/20 p-5">
-                <h3 className="font-semibold">
-                  If it's compromised
+                  <h3 className="font-semibold">
+                  If it&apos;s compromised
                 </h3>
 
                 <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
@@ -806,7 +806,7 @@ export default function BreachesPage() {
                   </li>
 
                   <li>
-                    • Change it anywhere you've reused it.
+                    • Change it anywhere you&apos;ve reused it.
                   </li>
 
                   <li>

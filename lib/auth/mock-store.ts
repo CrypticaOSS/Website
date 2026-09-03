@@ -40,6 +40,7 @@ function createDemoUser(email: string): AuthUser {
         : cleanEmail.split("@")[0] || "Cryptica User",
     email: cleanEmail,
     image: null,
+    role: "USER",
   }
 }
 

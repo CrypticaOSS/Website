@@ -942,6 +942,11 @@ export function AppSidebar() {
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {renderNavigationItem({
+                label: t("pricing"),
+                href: "/pricing",
+                icon: CreditCard,
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
