@@ -276,7 +276,12 @@ export async function POST() {
       createdToken,
     ] =
       await prisma.$transaction(
-        async (tx) => {
+        async (
+          tx: Pick<
+            typeof prisma,
+            "emailVerificationToken"
+          >
+        ) => {
           const deleted =
             await tx.emailVerificationToken.deleteMany({
               where: {
