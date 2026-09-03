@@ -41,6 +41,21 @@ function cleanString(
     : ""
 }
 
+function toPrismaBytes(
+  value: Uint8Array,
+): Uint8Array<ArrayBuffer> {
+  const bytes =
+    new Uint8Array(
+      new ArrayBuffer(
+        value.byteLength,
+      ),
+    )
+
+  bytes.set(value)
+
+  return bytes
+}
+
 export async function GET() {
   try {
     const session =
@@ -369,13 +384,19 @@ export async function POST(
             "LOGIN",
 
           ciphertext:
-            encrypted.ciphertext,
+            toPrismaBytes(
+              encrypted.ciphertext,
+            ),
 
           nonce:
-            encrypted.nonce,
+            toPrismaBytes(
+              encrypted.nonce,
+            ),
 
           authTag:
-            encrypted.authTag,
+            toPrismaBytes(
+              encrypted.authTag,
+            ),
 
           version: 1,
           favorite: false,
