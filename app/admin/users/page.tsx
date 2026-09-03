@@ -6,10 +6,24 @@ import {
   prisma,
 } from "@/lib/prisma"
 
+type AdminUser = {
+  id: string
+  name: string | null
+  email: string
+  role: string
+  emailVerifiedAt: Date | null
+  createdAt: Date
+  subscriptions: Array<{
+    plan: {
+      name: string
+    }
+  }>
+}
+
 export default async function AdminUsersPage() {
   await requireAdmin()
 
-  const users =
+  const users: AdminUser[] =
     await prisma.user.findMany({
       orderBy: {
         createdAt: "desc",
