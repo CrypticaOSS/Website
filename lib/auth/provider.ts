@@ -58,13 +58,13 @@ export async function loginWithProvider(
         email,
       },
       include: {
-        credential: true,
+        credentials: true,
       },
     })
 
   if (
     !user ||
-    !user.credential
+    user.credentials.length === 0
   ) {
     return {
       ok: false,
@@ -73,9 +73,12 @@ export async function loginWithProvider(
     }
   }
 
+  const credential =
+    user.credentials[0]
+
   const passwordValid =
     await argon2.verify(
-      user.credential.passwordHash,
+      credential.passwordHash,
       credentials.password
     )
 
