@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -99,6 +100,7 @@ model User {
   // External API / desktop application authentication.
   refreshTokens        RefreshToken[]
   deviceAuthorizations DeviceAuthorization[]
+  vaultSyncTickets     VaultSyncTicket[]
 
   @@index([createdAt])
 }
@@ -266,6 +268,8 @@ model Vault {
   kdfMemory      Int?
   kdfParallelism Int?
 
+  revision Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -302,6 +306,28 @@ model VaultItem {
   @@index([vaultId])
   @@index([vaultId, deletedAt])
   @@index([vaultId, updatedAt])
+}
+
+//
+// Vault live-sync tickets
+//
+
+model VaultSyncTicket {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String @unique
+
+  expiresAt DateTime
+  consumedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, consumedAt])
 }
 
 //
