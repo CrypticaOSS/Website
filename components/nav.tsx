@@ -33,6 +33,8 @@ import {
   Sparkles,
   Twitter,
   Users,
+  Download,
+  MonitorSmartphone
 } from "lucide-react"
 
 import { useTranslations } from "next-intl"
@@ -146,6 +148,16 @@ export function AppSidebar() {
       label: t("breaches"),
       href: "/breaches",
       icon: ShieldLock20Regular,
+    },
+    {
+      label: t("devices"),
+      href: "/devices",
+      icon: MonitorSmartphone,
+    },
+    {
+      label: t("downloads"),
+      href: "/downloads",
+      icon: Download,
     },
   ]
 

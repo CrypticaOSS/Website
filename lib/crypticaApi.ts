@@ -3,7 +3,7 @@ const API_URL =
   "http://localhost:4000"
 
 const INTERNAL_KEY =
-  process.env.CRYPTICA_API_INTERNAL_KEY
+  process.env.CRYPTICA_INTERNAL_API_KEY
 
 export class CrypticaApiError extends Error {
   status: number
@@ -33,7 +33,7 @@ export async function approveDevice({
 }: ApproveDeviceInput) {
   if (!INTERNAL_KEY) {
     throw new Error(
-      "CRYPTICA_API_INTERNAL_KEY is not configured."
+      "CRYPTICA_INTERNAL_API_KEY is not configured."
     )
   }
 

@@ -8,8 +8,6 @@ import {
   useState,
 } from "react"
 
-import Link from "next/link"
-
 import {
   AlertTriangle,
   Check,
@@ -21,7 +19,9 @@ import {
   KeyRound,
   Loader2,
   LockKeyhole,
+  Pencil,
   Plus,
+  Save,
   Search,
   ShieldCheck,
   Sparkles,
@@ -166,6 +166,34 @@ export default function VaultPage() {
   ] =
     useState(false)
 
+  const [
+    editTarget,
+    setEditTarget,
+  ] =
+    useState<VaultEntry | null>(
+      null,
+    )
+
+  const [
+    editForm,
+    setEditForm,
+  ] =
+    useState<VaultForm>(
+      EMPTY_FORM,
+    )
+
+  const [
+    editing,
+    setEditing,
+  ] =
+    useState(false)
+
+  const [
+    showEditPassword,
+    setShowEditPassword,
+  ] =
+    useState(false)
+
   const loadVault =
     useCallback(
       async () => {
@@ -274,6 +302,209 @@ export default function VaultPage() {
         [key]: value,
       }),
     )
+  }
+
+  function generatePassword(
+    length = 24,
+  ) {
+    const alphabet =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+"
+
+    const bytes =
+      new Uint32Array(
+        length,
+      )
+
+    window.crypto.getRandomValues(
+      bytes,
+    )
+
+    return Array.from(
+      bytes,
+      (value) =>
+        alphabet[
+          value %
+            alphabet.length
+        ],
+    ).join("")
+  }
+
+  function generateNewPassword() {
+    updateForm(
+      "password",
+      generatePassword(),
+    )
+
+    setShowNewPassword(
+      true,
+    )
+
+    toast.success(
+      "Secure password generated.",
+    )
+  }
+
+  function openEdit(
+    entry: VaultEntry,
+  ) {
+    setEditTarget(
+      entry,
+    )
+
+    setEditForm({
+      service:
+        entry.service,
+
+      username:
+        entry.username,
+
+      password:
+        entry.password,
+
+      notes:
+        entry.notes,
+    })
+
+    setShowEditPassword(
+      false,
+    )
+  }
+
+  function updateEditForm<
+    K extends keyof VaultForm,
+  >(
+    key: K,
+    value: VaultForm[K],
+  ) {
+    setEditForm(
+      (current) => ({
+        ...current,
+        [key]: value,
+      }),
+    )
+  }
+
+  function generateEditPassword() {
+    updateEditForm(
+      "password",
+      generatePassword(),
+    )
+
+    setShowEditPassword(
+      true,
+    )
+
+    toast.success(
+      "Secure password generated.",
+    )
+  }
+
+  async function handleEdit(
+    event:
+      FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    if (
+      !editTarget
+    ) {
+      return
+    }
+
+    if (
+      !editForm.service.trim() ||
+      !editForm.password
+    ) {
+      toast.error(
+        "Service and password are required.",
+      )
+
+      return
+    }
+
+    setEditing(
+      true,
+    )
+
+    try {
+      const response =
+        await fetch(
+          `/api/vault/${editTarget.id}`,
+          {
+            method:
+              "PATCH",
+
+            credentials:
+              "include",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(
+                editForm,
+              ),
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/login?callbackUrl=/vault"
+
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to update password.",
+        )
+      }
+
+      setEntries(
+        (current) =>
+          current.map(
+            (entry) =>
+              entry.id ===
+              editTarget.id
+                ? data.entry
+                : entry,
+          ),
+      )
+
+      setEditTarget(
+        null,
+      )
+
+      setEditForm(
+        EMPTY_FORM,
+      )
+
+      toast.success(
+        "Vault entry updated.",
+      )
+    } catch (
+      caughtError
+    ) {
+      toast.error(
+        caughtError instanceof
+          Error
+          ? caughtError.message
+          : "Unable to update password.",
+      )
+    } finally {
+      setEditing(
+        false,
+      )
+    }
   }
 
   async function handleAdd(
@@ -624,14 +855,17 @@ export default function VaultPage() {
                       Password
                     </Label>
 
-                    <Link
-                      href="/generate"
+                    <button
+                      type="button"
+                      onClick={
+                        generateNewPassword
+                      }
                       className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                     >
                       <Sparkles className="size-3" />
 
                       Generate
-                    </Link>
+                    </button>
                   </div>
 
                   <div className="relative">
@@ -889,18 +1123,35 @@ export default function VaultPage() {
                             </div>
                           </div>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              setDeleteTarget(
-                                entry,
-                              )
-                            }
-                            className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                openEdit(
+                                  entry,
+                                )
+                              }
+                              className="size-8 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                              aria-label={`Edit ${entry.service}`}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                setDeleteTarget(
+                                  entry,
+                                )
+                              }
+                              className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Delete ${entry.service}`}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
                         </div>
 
                         <div className="space-y-4 p-5">
@@ -998,6 +1249,223 @@ export default function VaultPage() {
           </section>
         </div>
       </main>
+
+      <Dialog
+        open={
+          Boolean(
+            editTarget,
+          )
+        }
+        onOpenChange={(
+          open,
+        ) => {
+          if (
+            !open &&
+            !editing
+          ) {
+            setEditTarget(
+              null,
+            )
+
+            setEditForm(
+              EMPTY_FORM,
+            )
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <form
+            onSubmit={
+              handleEdit
+            }
+          >
+            <DialogHeader>
+              <DialogTitle>
+                Edit vault entry
+              </DialogTitle>
+
+              <DialogDescription>
+                Update this login. The new contents will be encrypted before they are saved.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-5 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-service">
+                  Service
+                </Label>
+
+                <Input
+                  id="edit-service"
+                  value={
+                    editForm.service
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    updateEditForm(
+                      "service",
+                      event.target.value,
+                    )
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-username">
+                  Username or email
+                </Label>
+
+                <Input
+                  id="edit-username"
+                  value={
+                    editForm.username
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    updateEditForm(
+                      "username",
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="edit-password">
+                    Password
+                  </Label>
+
+                  <button
+                    type="button"
+                    onClick={
+                      generateEditPassword
+                    }
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <Sparkles className="size-3" />
+
+                    Generate
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Input
+                    id="edit-password"
+                    type={
+                      showEditPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={
+                      editForm.password
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      updateEditForm(
+                        "password",
+                        event.target.value,
+                      )
+                    }
+                    className="pr-10 font-mono"
+                    autoComplete="new-password"
+                    required
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowEditPassword(
+                        (current) =>
+                          !current,
+                      )
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={
+                      showEditPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {showEditPassword ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">
+                  Notes
+                </Label>
+
+                <Textarea
+                  id="edit-notes"
+                  value={
+                    editForm.notes
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    updateEditForm(
+                      "notes",
+                      event.target.value,
+                    )
+                  }
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  editing
+                }
+                onClick={() => {
+                  setEditTarget(
+                    null,
+                  )
+
+                  setEditForm(
+                    EMPTY_FORM,
+                  )
+                }}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={
+                  editing
+                }
+              >
+                {editing ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    Save changes
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={

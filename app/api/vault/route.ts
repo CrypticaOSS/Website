@@ -1,59 +1,108 @@
-import { NextResponse } from "next/server"
+import {
+  NextResponse,
+} from "next/server"
 
 import {
   getCurrentSession,
 } from "@/lib/auth/session"
 
-import {
-  decryptVaultPayload,
-  encryptVaultPayload,
-  type VaultLoginPayload,
-} from "@/lib/vault/crypto"
-
-import { prisma } from "@/lib/prisma"
-
 export const runtime =
   "nodejs"
 
-type CreateVaultEntryBody = {
-  service?: unknown
-  username?: unknown
-  password?: unknown
-  notes?: unknown
-}
+const API_URL =
+  (
+    process.env.CRYPTICA_API_URL ||
+    "https://api.crypticapp.org"
+  ).replace(
+    /\/+$/,
+    "",
+  )
 
-type VaultItemRecord = {
-  id: string
-  ciphertext: Uint8Array
-  nonce: Uint8Array
-  authTag: Uint8Array | null
-  favorite: boolean
-  createdAt: Date
-  updatedAt: Date
-}
+const INTERNAL_API_KEY =
+  process.env.CRYPTICA_INTERNAL_API_KEY ||
+  process.env.CRYPTICA_INTERNAL_API_KEY
 
-function cleanString(
-  value: unknown,
+function getInternalHeaders(
+  userId: string,
 ) {
-  return typeof value ===
-    "string"
-    ? value.trim()
-    : ""
+  if (!INTERNAL_API_KEY) {
+    throw new Error(
+      "CRYPTICA_INTERNAL_API_KEY is not configured.",
+    )
+  }
+
+return {
+  "X-Internal-Key":
+    INTERNAL_API_KEY,
+
+  "X-Cryptica-User-Id":
+    userId,
+
+  Accept:
+    "application/json",
+}
 }
 
-function toPrismaBytes(
-  value: Uint8Array,
-): Uint8Array<ArrayBuffer> {
-  const bytes =
-    new Uint8Array(
-      new ArrayBuffer(
-        value.byteLength,
-      ),
+async function parseResponse(
+  response: Response,
+) {
+  const text =
+    await response.text()
+
+  if (!text) {
+    return null
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return {
+      error: text,
+    }
+  }
+}
+
+function handleUpstreamResponse(
+  response: Response,
+  data: unknown,
+) {
+  /*
+   * IMPORTANT:
+   *
+   * A 401 from api.crypticapp.org does NOT mean
+   * the website session has expired.
+   *
+   * Only getCurrentSession() determines whether
+   * the website user is authenticated.
+   */
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "The Cryptica API rejected the website server authentication.",
+
+        code:
+          "UPSTREAM_UNAUTHORIZED",
+
+        upstream:
+          data,
+      },
+      {
+        status: 502,
+      },
     )
+  }
 
-  bytes.set(value)
-
-  return bytes
+  return NextResponse.json(
+    data ?? {},
+    {
+      status:
+        response.status,
+    },
+  )
 }
 
 export async function GET() {
@@ -66,6 +115,9 @@ export async function GET() {
         {
           error:
             "Authentication required.",
+
+          code:
+            "UNAUTHENTICATED",
         },
         {
           status: 401,
@@ -73,103 +125,60 @@ export async function GET() {
       )
     }
 
-    const items: VaultItemRecord[] =
-      await prisma.vaultItem.findMany({
-        where: {
-          vault: {
-            userId:
+    console.log(
+      "[VAULT:PROXY:GET] API_URL:",
+      API_URL,
+    )
+
+    console.log(
+      "[VAULT:PROXY:GET] TARGET:",
+      `${API_URL}/v1/vault`,
+    )
+
+    console.log(
+      "[VAULT:PROXY:GET] USER:",
+      session.user.id,
+    )
+
+    const response =
+      await fetch(
+        `${API_URL}/v1/vault`,
+        {
+          method:
+            "GET",
+
+          cache:
+            "no-store",
+
+          headers:
+            getInternalHeaders(
               session.user.id,
-          },
-
-          type:
-            "LOGIN",
-
-          deletedAt:
-            null,
-        },
-
-        select: {
-          id: true,
-          ciphertext: true,
-          nonce: true,
-          authTag: true,
-          favorite: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-
-        orderBy: {
-          updatedAt:
-            "desc",
-        },
-      })
-
-    const entries =
-      items.flatMap(
-        (item) => {
-          if (!item.authTag) {
-            console.error(
-              "[VAULT] Missing auth tag:",
-              item.id,
-            )
-
-            return []
-          }
-
-          try {
-            const payload =
-              decryptVaultPayload({
-                ciphertext:
-                  Buffer.from(
-                    item.ciphertext,
-                  ),
-
-                nonce:
-                  Buffer.from(
-                    item.nonce,
-                  ),
-
-                authTag:
-                  Buffer.from(
-                    item.authTag,
-                  ),
-              })
-
-            return [
-              {
-                id:
-                  item.id,
-
-                ...payload,
-
-                favorite:
-                  item.favorite,
-
-                createdAt:
-                  item.createdAt.toISOString(),
-
-                updatedAt:
-                  item.updatedAt.toISOString(),
-              },
-            ]
-          } catch (error) {
-            console.error(
-              `[VAULT] Unable to decrypt ${item.id}:`,
-              error,
-            )
-
-            return []
-          }
+            ),
         },
       )
 
-    return NextResponse.json({
-      ok: true,
-      entries,
-    })
+    const data =
+      await parseResponse(
+        response,
+      )
+
+    console.log(
+      "[VAULT:PROXY:GET] API STATUS:",
+      response.status,
+    )
+
+    console.log(
+      "[VAULT:PROXY:GET] API RESPONSE:",
+      data,
+    )
+
+    return handleUpstreamResponse(
+      response,
+      data,
+    )
   } catch (error) {
     console.error(
-      "[VAULT:GET]",
+      "[VAULT:PROXY:GET]",
       error,
     )
 
@@ -177,6 +186,9 @@ export async function GET() {
       {
         error:
           "Unable to load your vault.",
+
+        code:
+          "VAULT_PROXY_FAILED",
       },
       {
         status: 500,
@@ -197,6 +209,9 @@ export async function POST(
         {
           error:
             "Authentication required.",
+
+          code:
+            "UNAUTHENTICATED",
         },
         {
           status: 401,
@@ -204,256 +219,64 @@ export async function POST(
       )
     }
 
-    let body:
-      CreateVaultEntryBody
+    const body =
+      await request.text()
 
-    try {
-      body =
-        await request.json()
-    } catch {
-      return NextResponse.json(
+    console.log(
+      "[VAULT:PROXY:POST] TARGET:",
+      `${API_URL}/v1/vault`,
+    )
+
+    console.log(
+      "[VAULT:PROXY:POST] USER:",
+      session.user.id,
+    )
+
+    const response =
+      await fetch(
+        `${API_URL}/v1/vault`,
         {
-          error:
-            "Invalid request body.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
+          method:
+            "POST",
 
-    const service =
-      cleanString(
-        body.service,
-      )
+          cache:
+            "no-store",
 
-    const username =
-      cleanString(
-        body.username,
-      )
-
-    const password =
-      typeof body.password ===
-      "string"
-        ? body.password
-        : ""
-
-    const notes =
-      cleanString(
-        body.notes,
-      )
-
-    if (!service) {
-      return NextResponse.json(
-        {
-          error:
-            "Service is required.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    if (!password) {
-      return NextResponse.json(
-        {
-          error:
-            "Password is required.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    if (
-      service.length > 200
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Service name is too long.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    if (
-      username.length > 320
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Username is too long.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    if (
-      password.length >
-      4096
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Password is too long.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    if (
-      notes.length > 5000
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Notes are too long.",
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    /*
-     * Use the user's first vault.
-     *
-     * Later we can support multiple vaults.
-     */
-    const vault =
-      await prisma.vault.findFirst({
-        where: {
-          userId:
-            session.user.id,
-        },
-
-        select: {
-          id: true,
-        },
-
-        orderBy: {
-          createdAt:
-            "asc",
-        },
-      })
-
-    if (!vault) {
-      return NextResponse.json(
-        {
-          error:
-            "Your encrypted vault has not been initialised yet.",
-
-          code:
-            "VAULT_SETUP_REQUIRED",
-        },
-        {
-          status: 409,
-        },
-      )
-    }
-
-    const payload:
-      VaultLoginPayload = {
-        service,
-        username,
-        password,
-        notes,
-      }
-
-    const encrypted =
-      encryptVaultPayload(
-        payload,
-      )
-
-    const item =
-      await prisma.vaultItem.create({
-        data: {
-          vaultId:
-            vault.id,
-
-          type:
-            "LOGIN",
-
-          ciphertext:
-            toPrismaBytes(
-              encrypted.ciphertext,
+          headers: {
+            ...getInternalHeaders(
+              session.user.id,
             ),
 
-          nonce:
-            toPrismaBytes(
-              encrypted.nonce,
-            ),
+            "Content-Type":
+              "application/json",
+          },
 
-          authTag:
-            toPrismaBytes(
-              encrypted.authTag,
-            ),
-
-          version: 1,
-          favorite: false,
+          body,
         },
+      )
 
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      })
+    const data =
+      await parseResponse(
+        response,
+      )
 
-    await prisma.auditEvent.create({
-      data: {
-        userId:
-          session.user.id,
+    console.log(
+      "[VAULT:PROXY:POST] API STATUS:",
+      response.status,
+    )
 
-        type:
-          "VAULT_ITEM_CREATED",
+    console.log(
+      "[VAULT:PROXY:POST] API RESPONSE:",
+      data,
+    )
 
-        metadata: {
-          itemId:
-            item.id,
-
-          itemType:
-            "LOGIN",
-        },
-      },
-    })
-
-    return NextResponse.json(
-      {
-        ok: true,
-
-        entry: {
-          id:
-            item.id,
-
-          ...payload,
-
-          favorite:
-            false,
-
-          createdAt:
-            item.createdAt.toISOString(),
-
-          updatedAt:
-            item.updatedAt.toISOString(),
-        },
-      },
-      {
-        status: 201,
-      },
+    return handleUpstreamResponse(
+      response,
+      data,
     )
   } catch (error) {
     console.error(
-      "[VAULT:POST]",
+      "[VAULT:PROXY:POST]",
       error,
     )
 
@@ -461,6 +284,9 @@ export async function POST(
       {
         error:
           "Unable to save this vault item.",
+
+        code:
+          "VAULT_PROXY_FAILED",
       },
       {
         status: 500,
