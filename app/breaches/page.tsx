@@ -1,763 +1,1124 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import {
+  type FormEvent,
+  useRef,
+  useState,
+} from "react"
+
 import {
   AlertCircle,
+  Bell,
+  Building2,
   CheckCircle2,
   Copy,
-  HelpCircle,
-  RefreshCw,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  LockKeyhole,
+  Mail,
   Search,
   Shield,
   ShieldAlert,
-  Trash2,
+  ShieldCheck,
+  Sparkles,
+  TriangleAlert,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
 
-import { checkPasswordBreach } from "@/lib/breaches"
 import {
   getPasswordStrength,
   getStrengthInfo,
   PasswordStrength,
 } from "@/lib/password"
-import { Button } from "@/components/ui/button"
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+  checkPasswordBreach,
+} from "@/lib/breaches"
 
-// Crack time estimation utility
-function estimateCrackTime(
-  entropy: number
-): { time: string; scenario: string }[] {
-  // Entropy in bits, guesses = 2^entropy
-  const guesses = Math.pow(2, entropy)
-  // Guesses per second for different attack scenarios
-  const scenarios = [
-    { label: "Offline fast attack (10B/sec)", rate: 1e10 },
-    { label: "Offline slow attack (100K/sec)", rate: 1e5 },
-    { label: "Online attack (100/sec)", rate: 100 },
-    { label: "Online throttled (1/sec)", rate: 1 },
-  ]
-  return scenarios.map((s) => {
-    const seconds = guesses / s.rate
-    let time
-    if (seconds < 60) time = `${seconds.toFixed(2)} seconds`
-    else if (seconds < 3600) time = `${(seconds / 60).toFixed(2)} minutes`
-    else if (seconds < 86400) time = `${(seconds / 3600).toFixed(2)} hours`
-    else if (seconds < 31536000) time = `${(seconds / 86400).toFixed(2)} days`
-    else if (seconds < 31536000 * 100)
-      time = `${(seconds / 31536000).toFixed(2)} years`
-    else time = `centuries+`
-    return { time, scenario: s.label }
-  })
+import {
+  Button,
+} from "@/components/ui/button"
+
+import {
+  Input,
+} from "@/components/ui/input"
+
+import {
+  Label,
+} from "@/components/ui/label"
+
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+
+type Breach = {
+  name: string
+  title: string
+  domain: string
+  breachDate: string
+  addedDate: string
+  modifiedDate: string
+  affectedAccounts: number
+  description: string
+  logo: string
+  dataClasses: string[]
+  verified: boolean
+  fabricated: boolean
+  spamList: boolean
+  malware: boolean
 }
 
-// Helper for local history (hash only, not plain text)
-function sha1HexSync(str: string): string {
-  // Use a simple sync hash for localStorage key (not cryptographically secure, but fine for local history)
-  let hash = 0,
-    i,
-    chr
-  for (i = 0; i < str.length; i++) {
-    chr = str.charCodeAt(i)
-    hash = (hash << 5) - hash + chr
-    hash |= 0
-  }
-  return hash.toString(16)
+type AccountResult = {
+  ok: boolean
+  breached: boolean
+  email: string
+  totalBreaches: number
+  breaches: Breach[]
 }
 
-type BreachHistoryItem = { hash: string; count: number; checked: string }
-const HISTORY_KEY = "breach-history-v1"
+function getStrengthLabel(
+  strength:
+    PasswordStrength,
+) {
+  switch (strength) {
+    case PasswordStrength.VeryWeak:
+      return "Very weak"
 
-function loadHistory(): BreachHistoryItem[] {
-  if (typeof window === "undefined") return []
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")
-  } catch {
-    return []
+    case PasswordStrength.Weak:
+      return "Weak"
+
+    case PasswordStrength.Moderate:
+      return "Moderate"
+
+    case PasswordStrength.Strong:
+      return "Strong"
+
+    case PasswordStrength.VeryStrong:
+      return "Very strong"
+
+    default:
+      return "Unknown"
   }
 }
 
-function saveHistory(history: BreachHistoryItem[]) {
-  if (typeof window === "undefined") return
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+function getStrengthPercentage(
+  strength:
+    PasswordStrength,
+) {
+  switch (strength) {
+    case PasswordStrength.VeryWeak:
+      return 20
+
+    case PasswordStrength.Weak:
+      return 40
+
+    case PasswordStrength.Moderate:
+      return 60
+
+    case PasswordStrength.Strong:
+      return 80
+
+    case PasswordStrength.VeryStrong:
+      return 100
+
+    default:
+      return 0
+  }
 }
 
-const FAQ = [
-  {
-    q: "What is a password breach?",
-    a: "A password breach means your password was found in a public database of leaked credentials, often from hacked websites. If your password is breached, it is unsafe to use!",
-  },
-  {
-    q: "What should I do if my password is breached?",
-    a: "Immediately change your password everywhere you used it. Use a unique, strong password for each account.",
-  },
-  {
-    q: "How does this tool work?",
-    a: "We use the HaveIBeenPwned API, which checks your password using a privacy-preserving method (k-Anonymity). Your full password is never sent to any server.",
-  },
-  {
-    q: "What is a strong password?",
-    a: "A strong password is long, random, and uses a mix of letters, numbers, and symbols. Avoid using the same password for multiple sites.",
-  },
-  {
-    q: "What is the dark web?",
-    a: "The dark web is a part of the internet not indexed by search engines, where stolen data (including passwords) is often traded.",
-  },
-]
-
-export default function BreachesTool() {
-  const [password, setPassword] = useState("")
-  const [result, setResult] = useState<number | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [autoClear, setAutoClear] = useState(true)
-  const [history, setHistory] = useState<BreachHistoryItem[]>([])
-  const [showCopied, setShowCopied] = useState(false)
-  const [rateLimit, setRateLimit] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  // Load history on mount
-  useEffect(() => {
-    setHistory(loadHistory())
-  }, [])
-
-  // Password analysis
-  const strength = getPasswordStrength(password)
-  const analysis = getStrengthInfo(password)
-
-  async function handleCheck(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    setResult(null)
-    setRateLimit(false)
-    try {
-      const count = await checkPasswordBreach(password)
-      setResult(count)
-      // Save to history (hash only)
-      const hash = sha1HexSync(password)
-      const now = new Date().toISOString()
-      const newEntry = { hash, count, checked: now }
-      const newHistory = [
-        newEntry,
-        ...history.filter((h) => h.hash !== hash),
-      ].slice(0, 10)
-      setHistory(newHistory)
-      saveHistory(newHistory)
-      if (autoClear) setPassword("")
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message?.includes("rate limit"))
-        setRateLimit(true)
-      setError("Failed to check password. Try again later.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function handleCopy() {
-    if (!password) return
-    navigator.clipboard.writeText(password)
-    setShowCopied(true)
-    setTimeout(() => setShowCopied(false), 1500)
-  }
-
-  function handleGenerate() {
-    // For demo: generate a strong password (could use your generator UI)
-    const chars = {
-      lowerCases: "abcdefghijklmnopqrstuvwxyz",
-      upperCases: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      numbers: "0123456789",
-      special: "!@#$%^&*()_+-=[]{}|;:,.<>?",
-    }
-    const newPwd = Array.from(
-      { length: 16 },
-      () => chars.lowerCases + chars.upperCases + chars.numbers + chars.special
-    )
-      .map((set) => set[Math.floor(Math.random() * set.length)])
-      .join("")
-    setPassword(newPwd)
-    if (inputRef.current) inputRef.current.focus()
-  }
-
-  function getStrengthLabel(s: PasswordStrength) {
-    switch (s) {
-      case PasswordStrength.VeryWeak:
-        return "Very Weak"
-      case PasswordStrength.Weak:
-        return "Weak"
-      case PasswordStrength.Moderate:
-        return "Moderate"
-      case PasswordStrength.Strong:
-        return "Strong"
-      case PasswordStrength.VeryStrong:
-        return "Very Strong"
-      default:
-        return ""
-    }
-  }
-
-  const t = useTranslations()
-
+function ComingSoonFeature({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof Shield
+  title: string
+  description: string
+}) {
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-6 flex items-center space-x-2">
-        <div className="rounded-full bg-gradient-to-br from-red-500 to-orange-500 p-1.5">
-          <ShieldAlert className="h-5 w-5 text-white" />
-        </div>
-        <p className="ml-2 text-xl font-bold">
-          {t("breaches") || "Password Breach Checker"}
-        </p>
+    <div className="rounded-xl border bg-card/60 p-4">
+      <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
+        <Icon className="size-4 text-primary" />
       </div>
 
-      <Tabs defaultValue="checker" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="checker" className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-orange-500/5 opacity-0 transition-opacity group-data-[state=active]:opacity-100"></div>
-            <span className="relative z-10 flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              Check Password
-            </span>
+      <p className="mt-3 text-sm font-medium">
+        {title}
+      </p>
+
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        {description}
+      </p>
+    </div>
+  )
+}
+
+/*
+ * Securely generate random characters.
+ *
+ * Never use Math.random() for passwords.
+ */
+function secureRandomIndex(
+  max: number,
+) {
+  if (
+    max <= 0
+  ) {
+    return 0
+  }
+
+  const maximum =
+    0xffffffff -
+    (0xffffffff %
+      max)
+
+  const random =
+    new Uint32Array(
+      1,
+    )
+
+  do {
+    crypto.getRandomValues(
+      random,
+    )
+  } while (
+    random[0] >=
+    maximum
+  )
+
+  return (
+    random[0] %
+    max
+  )
+}
+
+function generatePassword(
+  length = 20,
+) {
+  const characters =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}:,.<>?"
+
+  return Array.from(
+    {
+      length,
+    },
+    () =>
+      characters[
+        secureRandomIndex(
+          characters.length,
+        )
+      ],
+  ).join("")
+}
+
+export default function BreachesPage() {
+  /*
+   * Password checker
+   */
+  const [
+    password,
+    setPassword,
+  ] =
+    useState("")
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] =
+    useState(false)
+
+  const [
+    passwordLoading,
+    setPasswordLoading,
+  ] =
+    useState(false)
+
+  const [
+    passwordResult,
+    setPasswordResult,
+  ] =
+    useState<
+      number | null
+    >(null)
+
+  const [
+    passwordError,
+    setPasswordError,
+  ] =
+    useState<
+      string | null
+    >(null)
+
+  /*
+   * Account checker
+   */
+  const [
+    email,
+    setEmail,
+  ] =
+    useState("")
+
+  const [
+    accountLoading,
+    setAccountLoading,
+  ] =
+    useState(false)
+
+  const [
+    accountResult,
+    setAccountResult,
+  ] =
+    useState<
+      AccountResult | null
+    >(null)
+
+  const [
+    accountError,
+    setAccountError,
+  ] =
+    useState<
+      string | null
+    >(null)
+
+  const passwordInput =
+    useRef<HTMLInputElement>(
+      null,
+    )
+
+  const strength =
+    getPasswordStrength(
+      password,
+    )
+
+  const analysis =
+    getStrengthInfo(
+      password,
+    )
+
+  async function checkPassword(
+    event:
+      FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    if (!password) {
+      return
+    }
+
+    setPasswordLoading(
+      true,
+    )
+
+    setPasswordResult(
+      null,
+    )
+
+    setPasswordError(
+      null,
+    )
+
+    try {
+      const result =
+        await checkPasswordBreach(
+          password,
+        )
+
+      setPasswordResult(
+        result,
+      )
+    } catch (error) {
+      console.error(
+        error,
+      )
+
+      setPasswordError(
+        "Cryptica couldn't check this password right now. Please try again.",
+      )
+    } finally {
+      setPasswordLoading(
+        false,
+      )
+    }
+  }
+
+  async function checkAccount(
+    event:
+      FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    const cleanEmail =
+      email
+        .trim()
+        .toLowerCase()
+
+    if (!cleanEmail) {
+      return
+    }
+
+    setAccountLoading(
+      true,
+    )
+
+    setAccountResult(
+      null,
+    )
+
+    setAccountError(
+      null,
+    )
+
+    try {
+      const response =
+        await fetch(
+          "/api/breaches/account",
+          {
+            method:
+              "POST",
+
+            credentials:
+              "include",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                email:
+                  cleanEmail,
+              }),
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/login?callbackUrl=/breaches"
+
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to search breaches.",
+        )
+      }
+
+      setAccountResult(
+        data,
+      )
+    } catch (error) {
+      setAccountError(
+        error instanceof
+          Error
+          ? error.message
+          : "Unable to search breaches.",
+      )
+    } finally {
+      setAccountLoading(
+        false,
+      )
+    }
+  }
+
+  function createPassword() {
+    const generated =
+      generatePassword(
+        20,
+      )
+
+    setPassword(
+      generated,
+    )
+
+    setPasswordResult(
+      null,
+    )
+
+    setPasswordError(
+      null,
+    )
+
+    requestAnimationFrame(
+      () =>
+        passwordInput.current?.focus(),
+    )
+  }
+
+  async function copyPassword() {
+    if (!password) {
+      return
+    }
+
+    await navigator.clipboard.writeText(
+      password,
+    )
+  }
+
+  return (
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Hero */}
+
+      <section className="relative overflow-hidden rounded-2xl border bg-card px-6 py-7 shadow-sm sm:px-8">
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent" />
+
+        <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
+
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              <ShieldAlert className="size-3.5 text-primary" />
+
+              Cryptica Breach Centre
+            </div>
+
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Find exposed credentials
+            </h1>
+
+            <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+              Check passwords against known compromised-password data or
+              search an email address for known data breaches.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-xl border bg-background/50 px-4 py-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <ShieldCheck className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold">
+                Powered by HIBP
+              </p>
+
+              <p className="text-xs text-muted-foreground">
+                Privacy-aware breach checking
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Tabs
+        defaultValue="password"
+        className="mt-6"
+      >
+        <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl border bg-card p-1 sm:w-auto sm:inline-grid">
+          <TabsTrigger
+            value="password"
+            className="gap-2"
+          >
+            <KeyRound className="size-4" />
+
+            Password
           </TabsTrigger>
-          <TabsTrigger value="history" className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity group-data-[state=active]:opacity-100"></div>
-            <span className="relative z-10 flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              Recent Checks
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="faq" className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-yellow-500/5 opacity-0 transition-opacity group-data-[state=active]:opacity-100"></div>
-            <span className="relative z-10 flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
-              FAQ
-            </span>
+
+          <TabsTrigger
+            value="account"
+            className="gap-2"
+          >
+            <Mail className="size-4" />
+
+            Email address
           </TabsTrigger>
         </TabsList>
 
-        {/* Password Breach Checker Tab */}
-        <TabsContent value="checker" className="mt-6">
-          <Card className="bg-card/50 relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-red-500/5 via-transparent to-orange-500/5"></div>
-            <CardHeader className="relative z-10">
-              <div className="mb-2 flex items-center gap-2">
-                <div className="rounded-full bg-gradient-to-br from-red-500/80 to-orange-500/80 p-1.5">
-                  <Search className="h-5 w-5 text-white" />
+        {/* Password */}
+
+        <TabsContent
+          value="password"
+          className="mt-5"
+        >
+          <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+            <section className="rounded-2xl border bg-card p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <KeyRound className="size-5 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">
-                  {t("breaches-tool-title") || "Password Breach Checker"}
-                </CardTitle>
+
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    Password exposure
+                  </h2>
+
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Check whether a password appears in known compromised
+                    password datasets.
+                  </p>
+                </div>
               </div>
-              <CardDescription className="text-base">
-                Check if your password has been found in public data breaches
-                using HaveIBeenPwned.
-              </CardDescription>
-            </CardHeader>
-            <form
-              onSubmit={handleCheck}
-              autoComplete="off"
-              aria-label="Password breach check form"
-            >
-              <CardContent className="relative z-10 flex flex-col gap-6">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="breach-password"
-                    className="text-sm font-medium"
+
+              <form
+                className="mt-6"
+                onSubmit={
+                  checkPassword
+                }
+              >
+                <Label htmlFor="password">
+                  Password
+                </Label>
+
+                <div className="mt-2 flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      ref={
+                        passwordInput
+                      }
+                      id="password"
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      value={
+                        password
+                      }
+                      onChange={(
+                        event,
+                      ) => {
+                        setPassword(
+                          event
+                            .target
+                            .value,
+                        )
+
+                        setPasswordResult(
+                          null,
+                        )
+                      }}
+                      autoComplete="new-password"
+                      placeholder="Enter a password"
+                      className="h-11 pr-10"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          (
+                            current,
+                          ) =>
+                            !current,
+                        )
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-11"
+                    disabled={
+                      !password
+                    }
+                    onClick={() =>
+                      void copyPassword()
+                    }
                   >
-                    Password
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-grow">
-                      <Input
-                        id="breach-password"
-                        ref={inputRef}
-                        type="password"
-                        placeholder="Enter password to check..."
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        autoComplete="new-password"
-                        aria-label="Password to check"
-                        className="bg-background/80 border-primary/10 focus:border-primary/30 h-12 backdrop-blur-sm"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      aria-label="Copy password"
-                      onClick={handleCopy}
-                      disabled={!password}
-                      className="bg-background/80 border-primary/10 hover:border-primary/30 h-12 w-12 backdrop-blur-sm"
-                    >
-                      <Copy className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      aria-label="Generate password"
-                      onClick={handleGenerate}
-                      className="bg-background/80 border-primary/10 hover:border-primary/30 h-12 w-12 backdrop-blur-sm"
-                    >
-                      <RefreshCw className="h-5 w-5" />
-                    </Button>
-                  </div>
+                    <Copy className="size-4" />
+                  </Button>
                 </div>
-                {showCopied && (
-                  <div className="bg-primary/10 text-primary flex items-center gap-1.5 rounded px-2 py-1 text-xs">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Copied to clipboard! (Be careful with clipboard safety.)
-                  </div>
-                )}
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={
+                      createPassword
+                    }
+                  >
+                    <Sparkles className="size-4" />
+
+                    Generate
+                  </Button>
+                </div>
 
                 {password && (
-                  <div className="bg-background/50 border-primary/10 rounded-lg border p-4 backdrop-blur-sm">
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <Label className="text-sm font-medium">
-                        Password Strength
-                      </Label>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          strength === PasswordStrength.VeryWeak
-                            ? "bg-red-100/10 text-red-500"
-                            : strength === PasswordStrength.Weak
-                              ? "bg-orange-100/10 text-orange-500"
-                              : strength === PasswordStrength.Moderate
-                                ? "bg-yellow-100/10 text-yellow-500"
-                                : strength === PasswordStrength.Strong
-                                  ? "bg-green-100/10 text-green-500"
-                                  : "bg-blue-100/10 text-blue-500"
-                        }`}
-                      >
-                        {getStrengthLabel(strength)}
+                  <div className="mt-5 rounded-xl border bg-muted/15 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm font-medium">
+                        Strength
+                      </span>
+
+                      <span className="text-sm font-semibold">
+                        {getStrengthLabel(
+                          strength,
+                        )}
                       </span>
                     </div>
 
-                    <div className="bg-background/80 mb-4 h-2.5 w-full overflow-hidden rounded-full">
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                       <div
-                        className={`h-full rounded transition-all duration-500 ease-in-out ${
-                          strength === PasswordStrength.VeryWeak
-                            ? "w-1/5 bg-gradient-to-r from-red-500 to-red-600"
-                            : strength === PasswordStrength.Weak
-                              ? "w-2/5 bg-gradient-to-r from-orange-400 to-orange-600"
-                              : strength === PasswordStrength.Moderate
-                                ? "w-3/5 bg-gradient-to-r from-yellow-400 to-yellow-500"
-                                : strength === PasswordStrength.Strong
-                                  ? "w-4/5 bg-gradient-to-r from-green-400 to-green-600"
-                                  : strength === PasswordStrength.VeryStrong
-                                    ? "w-full bg-gradient-to-r from-blue-400 to-blue-600"
-                                    : "w-0"
-                        }`}
-                        aria-valuenow={analysis.score}
-                        aria-valuemax={100}
-                        aria-valuemin={0}
-                        role="progressbar"
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{
+                          width: `${getStrengthPercentage(
+                            strength,
+                          )}%`,
+                        }}
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                      <div className="bg-background/80 border-primary/10 hover:border-primary/30 rounded-md border p-2 backdrop-blur-sm transition-colors">
-                        <div className="text-muted-foreground text-xs">
-                          Length
-                        </div>
-                        <div className="font-semibold">{analysis.length}</div>
-                      </div>
-                      <div className="bg-background/80 border-primary/10 hover:border-primary/30 rounded-md border p-2 backdrop-blur-sm transition-colors">
-                        <div className="text-muted-foreground text-xs">
-                          Entropy
-                        </div>
-                        <div className="font-semibold">
-                          {analysis.entropy} bits
-                        </div>
-                      </div>
-                      <div className="bg-background/80 rounded-md border border-blue-500/10 p-2 backdrop-blur-sm transition-colors hover:border-blue-500/30">
-                        <div className="text-xs text-blue-500">Lowercase</div>
-                        <div className="font-semibold">
-                          {analysis.lowercase}
-                        </div>
-                      </div>
-                      <div className="bg-background/80 rounded-md border border-red-500/10 p-2 backdrop-blur-sm transition-colors hover:border-red-500/30">
-                        <div className="text-xs text-red-500">Uppercase</div>
-                        <div className="font-semibold">
-                          {analysis.uppercase}
-                        </div>
-                      </div>
-                      <div className="bg-background/80 rounded-md border border-green-500/10 p-2 backdrop-blur-sm transition-colors hover:border-green-500/30">
-                        <div className="text-xs text-green-500">Numbers</div>
-                        <div className="font-semibold">{analysis.numbers}</div>
-                      </div>
-                      <div className="bg-background/80 rounded-md border border-purple-500/10 p-2 backdrop-blur-sm transition-colors hover:border-purple-500/30">
-                        <div className="text-xs text-purple-500">Special</div>
-                        <div className="font-semibold">{analysis.special}</div>
-                      </div>
-                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <Metric
+                        label="Length"
+                        value={
+                          analysis.length
+                        }
+                      />
 
-                    <Separator className="bg-primary/10 my-4" />
+                      <Metric
+                        label="Entropy"
+                        value={`${analysis.entropy} bits`}
+                      />
 
-                    <div>
-                      <h4 className="mb-2 text-sm font-medium">
-                        Estimated crack time:
-                      </h4>
-                      <ul className="space-y-1.5">
-                        {estimateCrackTime(analysis.entropy).map((row, i) => (
-                          <li
-                            key={i}
-                            className="bg-background/50 flex items-center justify-between rounded-md p-2 text-xs"
-                          >
-                            <span className="text-muted-foreground">
-                              {row.scenario}
-                            </span>
-                            <span className="font-mono font-medium">
-                              {row.time}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      <Metric
+                        label="Numbers"
+                        value={
+                          analysis.numbers
+                        }
+                      />
+
+                      <Metric
+                        label="Symbols"
+                        value={
+                          analysis.special
+                        }
+                      />
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="auto-clear"
-                    checked={autoClear}
-                    onCheckedChange={(checked) =>
-                      setAutoClear(checked === true)
-                    }
-                  />
-                  <Label htmlFor="auto-clear" className="text-sm">
-                    Auto-clear password after check
-                  </Label>
-                </div>
-                {error && (
-                  <div
-                    className="bg-destructive/10 border-destructive/30 text-destructive flex items-start gap-2 rounded-md border px-3 py-2 text-sm"
-                    role="alert"
-                  >
-                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <span>{error}</span>
-                  </div>
+                {passwordError && (
+                  <ErrorBox>
+                    {passwordError}
+                  </ErrorBox>
                 )}
 
-                {rateLimit && (
-                  <div className="flex items-start gap-2 rounded-md border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm text-orange-500">
-                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <span>
-                      You are checking too quickly. Please wait and try again.
-                    </span>
-                  </div>
-                )}
-
-                {result !== null && (
-                  <div className="mt-4">
-                    {result > 0 ? (
-                      <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-red-500/20 p-2">
-                            <ShieldAlert className="h-5 w-5 text-red-500" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="mb-1 font-semibold text-red-500">
-                              This password has been found in{" "}
-                              {result.toLocaleString()} breaches!
-                            </h4>
-                            <p className="text-muted-foreground mb-3 text-sm">
-                              It is unsafe to use this password. This password
-                              has been exposed in data breaches and should not
-                              be used for any accounts.
-                            </p>
-                            <Button
-                              type="button"
-                              onClick={handleGenerate}
-                              className="group relative w-full overflow-hidden"
-                            >
-                              <span className="via-primary absolute inset-0 h-full w-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 transition-opacity group-hover:opacity-100"></span>
-                              <span className="relative z-10 flex items-center justify-center gap-2">
-                                <RefreshCw className="h-4 w-4" />
-                                Generate New Password
-                              </span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                {passwordResult !==
+                  null && (
+                  <div className="mt-5">
+                    {passwordResult >
+                    0 ? (
+                      <ResultBox
+                        danger
+                        icon={
+                          ShieldAlert
+                        }
+                        title="Password compromised"
+                      >
+                        This password appears{" "}
+                        <strong>
+                          {passwordResult.toLocaleString()}
+                        </strong>{" "}
+                        times in known compromised-password data. Do not use
+                        it.
+                      </ResultBox>
                     ) : (
-                      <div className="flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4">
-                        <div className="rounded-full bg-green-500/20 p-2">
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-green-500">
-                            This password was NOT found in any known breaches.
-                          </h4>
-                          <p className="text-muted-foreground text-sm">
-                            However, always use unique passwords for different
-                            accounts.
-                          </p>
-                        </div>
-                      </div>
+                      <ResultBox
+                        icon={
+                          CheckCircle2
+                        }
+                        title="No known exposure found"
+                      >
+                        This password wasn&apos;t found in the compromised-password
+                        corpus. That doesn&apos;t guarantee it is safe, so it should
+                        still be strong and unique.
+                      </ResultBox>
                     )}
                   </div>
                 )}
-              </CardContent>
 
-              <CardFooter className="relative z-10 flex flex-col items-start gap-2 pt-2 pb-6">
                 <Button
                   type="submit"
-                  disabled={loading || !password}
-                  className="group relative w-full overflow-hidden py-6 text-base"
+                  className="mt-5 w-full"
                   size="lg"
+                  disabled={
+                    !password ||
+                    passwordLoading
+                  }
                 >
-                  <span className="via-primary absolute inset-0 h-full w-full bg-gradient-to-r from-red-500 to-orange-500 opacity-0 transition-opacity group-hover:opacity-100"></span>
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {loading ? (
-                      <>
-                        <RefreshCw className="h-5 w-5 animate-spin" />
-                        Checking...
-                      </>
-                    ) : (
-                      <>
-                        <Shield className="h-5 w-5" />
-                        Check Breach
-                      </>
-                    )}
-                  </span>
+                  {passwordLoading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Checking...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="size-4" />
+                      Check password
+                    </>
+                  )}
                 </Button>
-              </CardFooter>
-            </form>
-          </Card>
+              </form>
+            </section>
 
-          {result !== null && (
-            <Card className="bg-card/50 relative mt-6 overflow-hidden border-0 shadow-lg backdrop-blur-sm">
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 via-transparent to-violet-500/5"></div>
-              <CardHeader className="relative z-10 pb-3">
+            <aside className="space-y-4">
+              <div className="rounded-2xl border bg-card p-5">
                 <div className="flex items-center gap-2">
-                  <div className="rounded-full bg-gradient-to-br from-blue-500/80 to-violet-500/80 p-1.5">
-                    {result > 0 ? (
-                      <ShieldAlert className="h-4 w-4 text-white" />
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-                  <CardTitle className="text-base">
-                    {result > 0 ? "Password Compromised" : "Password Secure"}
-                  </CardTitle>
+                  <ShieldCheck className="size-4 text-primary" />
+
+                  <h3 className="font-semibold">
+                    Password privacy
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className="relative z-10 pt-0">
-                <p className="text-muted-foreground mb-3 text-sm">
-                  {result > 0
-                    ? `Your password was found in ${result.toLocaleString()} data breaches. It should be changed immediately on any site where you use it.`
-                    : "Your password appears to be secure and hasn't been found in any known data breaches."}
+
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Cryptica hashes the password in your browser and only sends
+                  the first five characters of its SHA-1 hash to the Pwned
+                  Passwords range API.
                 </p>
-                <div className="bg-background/50 border-primary/10 rounded-md border p-2 text-xs backdrop-blur-sm">
-                  <p className="mb-1 font-medium">Security Tips:</p>
-                  <ul className="text-muted-foreground list-inside list-disc space-y-1">
-                    <li>Use a unique password for each account</li>
-                    <li>Include uppercase, lowercase, numbers, and symbols</li>
-                    <li>Aim for at least 12 characters in length</li>
-                    <li>Consider using a password manager</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Your password and complete hash are never sent to HIBP.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border bg-muted/20 p-5">
+                  <h3 className="font-semibold">
+                  If it&apos;s compromised
+                </h3>
+
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  <li>
+                    • Stop using the password.
+                  </li>
+
+                  <li>
+                    • Change it anywhere you&apos;ve reused it.
+                  </li>
+
+                  <li>
+                    • Generate a unique replacement.
+                  </li>
+
+                  <li>
+                    • Enable 2FA where available.
+                  </li>
+                </ul>
+              </div>
+            </aside>
+          </div>
         </TabsContent>
 
-        {/* Recent Checks Tab */}
-        <TabsContent value="history" className="mt-6">
-          <Card className="bg-card/50 relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"></div>
-            <CardHeader className="relative z-10">
-              <div className="mb-1 flex items-center gap-2">
-                <div className="rounded-full bg-gradient-to-br from-blue-500/80 to-purple-500/80 p-1.5">
-                  <Search className="h-5 w-5 text-white" />
-                </div>
-                <CardTitle className="text-lg">Recent Checks</CardTitle>
-              </div>
-              <CardDescription>
-                Only the hash of your password is stored locally for privacy.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              {history.length > 0 ? (
-                <div className="border-primary/10 bg-background/50 overflow-hidden rounded-md border backdrop-blur-sm">
-                  {history.map((h, i) => (
-                    <div
-                      key={h.hash}
-                      className="border-primary/10 hover:bg-primary/5 flex items-center justify-between border-b px-3 py-2.5 text-xs transition-colors last:border-b-0"
-                    >
-                      <div className="flex items-center gap-2">
-                        {h.count > 0 ? (
-                          <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                        ) : (
-                          <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                        )}
-                        <span className="font-mono" title={h.hash}>
-                          ...{h.hash.slice(-8)}
-                        </span>
-                      </div>
-                      <span
-                        className={
-                          h.count > 0
-                            ? "font-medium text-red-500"
-                            : "font-medium text-green-500"
-                        }
-                      >
-                        {h.count > 0
-                          ? `${h.count.toLocaleString()} breaches`
-                          : "No breach"}
-                      </span>
-                      <span className="text-muted-foreground hidden sm:inline">
-                        {new Date(h.checked).toLocaleString()}
-                      </span>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        aria-label="Remove from history"
-                        onClick={() => {
-                          const newHistory = history.filter(
-                            (_, idx) => idx !== i
-                          )
-                          setHistory(newHistory)
-                          saveHistory(newHistory)
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="bg-muted/20 mb-3 rounded-full p-3">
-                    <Search className="text-muted-foreground h-6 w-6" />
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    No check history yet
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Check a password to see your history here
-                  </p>
-                </div>
-              )}
-            </CardContent>
-            {history.length > 0 && (
-              <CardFooter className="relative z-10 pt-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                  onClick={() => {
-                    setHistory([])
-                    saveHistory([])
-                  }}
-                >
-                  <Trash2 className="mr-1 h-3.5 w-3.5" />
-                  Clear History
-                </Button>
-              </CardFooter>
-            )}
-          </Card>
-        </TabsContent>
+        {/* Account */}
 
-        {/* FAQ Tab */}
-        <TabsContent value="faq" className="mt-6">
-          <Card className="bg-card/50 relative overflow-hidden border-0 shadow-lg backdrop-blur-sm">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-500/5 via-transparent to-yellow-500/5"></div>
-            <CardHeader className="relative z-10">
-              <div className="mb-1 flex items-center gap-2">
-                <div className="rounded-full bg-gradient-to-br from-amber-500/80 to-yellow-500/80 p-1.5">
-                  <HelpCircle className="h-5 w-5 text-white" />
-                </div>
-                <CardTitle className="text-lg">FAQ & Learn More</CardTitle>
-              </div>
-              <CardDescription>
-                Important information about password breaches and security.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="space-y-3">
-                {FAQ.map((item, i) => (
-                  <div
-                    key={i}
-                    className="border-primary/10 bg-background/50 hover:border-primary/20 rounded-md border p-3 backdrop-blur-sm transition-colors"
-                  >
-                    <div className="mb-1 text-sm font-medium">{item.q}</div>
-                    <div className="text-muted-foreground text-sm">
-                      {item.a}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+       <TabsContent
+  value="account"
+  className="mt-5"
+>
+  <section className="relative overflow-hidden rounded-2xl border bg-card px-6 py-14 shadow-sm sm:px-10 sm:py-20">
+    {/* Background effects */}
+    <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent" />
 
-          <Card className="bg-card/50 relative mt-6 overflow-hidden border-0 shadow-lg backdrop-blur-sm">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 via-transparent to-green-500/5"></div>
-            <CardHeader className="relative z-10 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-gradient-to-br from-blue-500/80 to-green-500/80 p-1.5">
-                  <Shield className="h-4 w-4 text-white" />
-                </div>
-                <CardTitle className="text-base">
-                  Password Security Best Practices
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10 pt-0">
-              <div className="space-y-4">
-                <div className="bg-background/50 border-primary/10 rounded-md border p-3 backdrop-blur-sm">
-                  <h3 className="mb-2 text-sm font-medium">
-                    Use a Password Manager
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Password managers help you create and store unique, strong
-                    passwords for all your accounts. They encrypt your passwords
-                    and can automatically fill them in, making it easy to use
-                    different complex passwords for each site.
-                  </p>
-                </div>
+    <div className="pointer-events-none absolute left-1/2 top-0 size-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-                <div className="bg-background/50 border-primary/10 rounded-md border p-3 backdrop-blur-sm">
-                  <h3 className="mb-2 text-sm font-medium">
-                    Enable Two-Factor Authentication (2FA)
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Add an extra layer of security by enabling 2FA wherever
-                    possible. Even if your password is compromised, attackers
-                    would still need the second factor (like a code from your
-                    phone) to access your account.
-                  </p>
-                </div>
+    <div className="relative mx-auto max-w-2xl text-center">
+      {/* Icon */}
+      <div className="mx-auto flex size-16 items-center justify-center rounded-2xl border bg-primary/10 shadow-sm">
+        <Mail className="size-7 text-primary" />
+      </div>
 
-                <div className="bg-background/50 border-primary/10 rounded-md border p-3 backdrop-blur-sm">
-                  <h3 className="mb-2 text-sm font-medium">
-                    Regularly Check for Breaches
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Make it a habit to periodically check if your passwords have
-                    been part of data breaches. Services like HaveIBeenPwned can
-                    alert you when your email appears in new breaches.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Badge */}
+      <div className="mt-6 inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+        <Sparkles className="size-3.5 text-primary" />
+
+        Coming soon
+      </div>
+
+      <h2 className="mt-5 text-2xl font-bold tracking-tight sm:text-3xl">
+        Email breach monitoring
+      </h2>
+
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+        We&apos;re building account breach monitoring that will help you
+        discover when your email address appears in known data breaches.
+      </p>
+
+      {/* Preview */}
+      <div className="mx-auto mt-8 max-w-lg rounded-2xl border bg-background/50 p-5 text-left">
+        <div className="flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <ShieldCheck className="size-5 text-primary" />
+          </div>
+
+          <div>
+            <p className="font-medium">
+              What&apos;s coming
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Search known breaches, see what information was exposed and
+              receive clear guidance on what you should secure.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <ComingSoonFeature
+            icon={Search}
+            title="Breach search"
+            description="Check an email against known breach data."
+          />
+
+          <ComingSoonFeature
+            icon={ShieldAlert}
+            title="Exposure details"
+            description="See which information may have been exposed."
+          />
+
+          <ComingSoonFeature
+            icon={Bell}
+            title="Breach alerts"
+            description="Get notified about newly discovered exposure."
+          />
+
+          <ComingSoonFeature
+            icon={LockKeyhole}
+            title="Security guidance"
+            description="Know what action to take after a breach."
+          />
+        </div>
+      </div>
+
+      {/* Privacy */}
+      <div className="mx-auto mt-6 flex max-w-lg items-start gap-3 rounded-xl border bg-muted/20 p-4 text-left">
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+
+        <p className="text-xs leading-5 text-muted-foreground">
+          We&apos;re taking additional time to make sure account breach
+          monitoring fits Cryptica&apos;s privacy-first approach before making
+          it available.
+        </p>
+      </div>
+
+      <div className="mt-7">
+        <Button
+          variant="outline"
+          disabled
+        >
+          <Mail className="size-4" />
+
+          Email search coming soon
+        </Button>
+      </div>
     </div>
+  </section>
+</TabsContent>
+      </Tabs>
+    </main>
+  )
+}
+
+function Metric({
+  label,
+  value,
+}: {
+  label: string
+  value:
+    string | number
+}) {
+  return (
+    <div className="rounded-lg border bg-background/50 p-3">
+      <p className="text-xs text-muted-foreground">
+        {label}
+      </p>
+
+      <p className="mt-1 font-semibold">
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function ErrorBox({
+  children,
+}: {
+  children:
+    React.ReactNode
+}) {
+  return (
+    <div className="mt-5 flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+      <AlertCircle className="mt-0.5 size-4 shrink-0" />
+
+      <div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function ResultBox({
+  icon:
+    Icon,
+
+  title,
+
+  children,
+
+  danger = false,
+}: {
+  icon:
+    typeof Shield
+
+  title:
+    string
+
+  children:
+    React.ReactNode
+
+  danger?:
+    boolean
+}) {
+  return (
+    <div
+      className={
+        danger
+          ? "rounded-xl border border-destructive/20 bg-destructive/5 p-5"
+          : "rounded-xl border border-primary/20 bg-primary/5 p-5"
+      }
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={
+            danger
+              ? "flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10"
+              : "flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10"
+          }
+        >
+          <Icon
+            className={
+              danger
+                ? "size-4 text-destructive"
+                : "size-4 text-primary"
+            }
+          />
+        </div>
+
+        <div>
+          <h3 className="font-semibold">
+            {title}
+          </h3>
+
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {children}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BreachCard({
+  breach,
+}: {
+  breach:
+    Breach
+}) {
+  return (
+    <article className="overflow-hidden rounded-xl border bg-background/40">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
+            <Building2 className="size-5 text-destructive" />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-semibold">
+                {breach.title}
+              </h3>
+
+              {breach.verified && (
+                <span className="rounded-full border bg-primary/5 px-2 py-0.5 text-[11px] text-primary">
+                  Verified
+                </span>
+              )}
+
+              {breach.malware && (
+                <span className="rounded-full border border-destructive/20 bg-destructive/5 px-2 py-0.5 text-[11px] text-destructive">
+                  Malware
+                </span>
+              )}
+            </div>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              {breach.domain ||
+                "Unknown domain"}
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 text-sm text-muted-foreground sm:text-right">
+          <p>
+            Breached{" "}
+            {new Date(
+              `${breach.breachDate}T00:00:00`,
+            ).toLocaleDateString()}
+          </p>
+
+          <p className="mt-1">
+            {breach.affectedAccounts.toLocaleString()} accounts
+          </p>
+        </div>
+      </div>
+
+      <div className="border-t p-5">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Exposed data
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {breach.dataClasses.map(
+            (
+              item,
+            ) => (
+              <span
+                key={
+                  item
+                }
+                className="rounded-full border bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {item}
+              </span>
+            ),
+          )}
+        </div>
+
+        {breach.domain && (
+          <a
+            href={`https://${breach.domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+          >
+            {breach.domain}
+
+            <ExternalLink className="size-3" />
+          </a>
+        )}
+      </div>
+    </article>
   )
 }
