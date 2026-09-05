@@ -10,7 +10,7 @@ const plans = [
 	{
 		name: "Pro",
 		description:
-			"Great for small businesses and startups looking to get started with AI",
+			"Pro is ideal for individual users who need advanced password management features.",
 		price: 2.99,
 		yearlyPrice: 24.99,
 		buttonText: "Get started",
@@ -28,7 +28,7 @@ const plans = [
 	{
 		name: "Family",
 		description:
-			"Best value for growing businesses that need more advanced features",
+			"Best value for families up to 4 users with advanced features.",
 		price: 9.99,
 		yearlyPrice: 39.99,
 		buttonText: "Get started",
@@ -47,7 +47,7 @@ const plans = [
 	{
 		name: "Business",
 		description:
-			"Advanced plan with enhanced security and unlimited access for large teams",
+			"Advanced plan suitable for businesses requiring robust password management and team collaboration features.",
 		price: 11.99,
 		yearlyPrice: 119.99,
 		buttonText: "Get started",
