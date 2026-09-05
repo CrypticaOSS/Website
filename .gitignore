@@ -10,6 +10,11 @@
 *.userosscache
 *.sln.docstates
 
+# Local environment variables
+.env
+.env.*
+!.env.example
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -387,3 +392,7 @@ i18n/soon/**
 
 ignored/
 ignored/**
+
+package-lock.json
+
+bun.lock
