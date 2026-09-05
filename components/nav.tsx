@@ -196,6 +196,11 @@ export function AppSidebar() {
       href: "/docs",
       icon: Info20Regular,
     },
+    {
+      label: t("pricing"),
+      href: "/pricing",
+      icon: CreditCard,
+    },
   ]
 
   const legalLinks: NavigationItem[] = [
@@ -858,11 +863,17 @@ export function AppSidebar() {
                   asChild
                   tooltip={t("twitter")}
                   className="
+                    group/social-item
                     h-10 rounded-xl px-3
                     text-sidebar-foreground/70
 
                     hover:bg-sidebar-accent
                     hover:text-sidebar-accent-foreground
+
+                    group-data-[collapsible=icon]:mx-auto
+                    group-data-[collapsible=icon]:size-10
+                    group-data-[collapsible=icon]:justify-center
+                    group-data-[collapsible=icon]:p-0
                   "
                 >
                   <a
@@ -872,15 +883,17 @@ export function AppSidebar() {
                   >
                     <span
                       className="
-                        flex size-7
+                        flex size-7 shrink-0
                         items-center justify-center
                         rounded-lg
+
+                        group-data-[collapsible=icon]:size-8
                       "
                     >
                       <Twitter className="size-[17px]" />
                     </span>
 
-                    <span>
+                    <span className="group-data-[collapsible=icon]:hidden">
                       {t("twitter")}
                     </span>
                   </a>
@@ -892,11 +905,17 @@ export function AppSidebar() {
                   asChild
                   tooltip={t("github")}
                   className="
+                    group/social-item
                     h-10 rounded-xl px-3
                     text-sidebar-foreground/70
 
                     hover:bg-sidebar-accent
                     hover:text-sidebar-accent-foreground
+
+                    group-data-[collapsible=icon]:mx-auto
+                    group-data-[collapsible=icon]:size-10
+                    group-data-[collapsible=icon]:justify-center
+                    group-data-[collapsible=icon]:p-0
                   "
                 >
                   <a
@@ -906,15 +925,17 @@ export function AppSidebar() {
                   >
                     <span
                       className="
-                        flex size-7
+                        flex size-7 shrink-0
                         items-center justify-center
                         rounded-lg
+
+                        group-data-[collapsible=icon]:size-8
                       "
                     >
                       <Github className="size-[17px]" />
                     </span>
 
-                    <span>
+                    <span className="group-data-[collapsible=icon]:hidden">
                       {t("github")}
                     </span>
                   </a>
@@ -926,11 +947,17 @@ export function AppSidebar() {
                   asChild
                   tooltip={t("discord")}
                   className="
+                    group/social-item
                     h-10 rounded-xl px-3
                     text-sidebar-foreground/70
 
                     hover:bg-sidebar-accent
                     hover:text-sidebar-accent-foreground
+
+                    group-data-[collapsible=icon]:mx-auto
+                    group-data-[collapsible=icon]:size-10
+                    group-data-[collapsible=icon]:justify-center
+                    group-data-[collapsible=icon]:p-0
                   "
                 >
                   <a
@@ -940,25 +967,22 @@ export function AppSidebar() {
                   >
                     <span
                       className="
-                        flex size-7
+                        flex size-7 shrink-0
                         items-center justify-center
                         rounded-lg
+
+                        group-data-[collapsible=icon]:size-8
                       "
                     >
                       <MessageCircle className="size-[17px]" />
                     </span>
 
-                    <span>
+                    <span className="group-data-[collapsible=icon]:hidden">
                       {t("discord")}
                     </span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {renderNavigationItem({
-                label: t("pricing"),
-                href: "/pricing",
-                icon: CreditCard,
-              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

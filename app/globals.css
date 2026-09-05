@@ -503,6 +503,31 @@ html {
   background-clip: padding-box;
 }
 
+/* Continuously scrolls the duplicated testimonial track. */
+@keyframes testimonial-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 0.5rem));
+  }
+}
+
+.testimonial-marquee {
+  animation: testimonial-marquee 42s linear infinite;
+}
+
+.testimonial-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-marquee {
+    animation-play-state: paused;
+  }
+}
+
 /* ==========================================================================
    Icons
    ========================================================================== */

@@ -400,11 +400,7 @@ export default function Home() {
       {/* Testimonials                                                        */}
       {/* ------------------------------------------------------------------ */}
 
-      <section className="py-20 sm:py-28">
-        <div className="container mx-auto px-4">
-          <TestimonialSection />
-        </div>
-      </section>
+      <TestimonialSection />
 
       {/* ------------------------------------------------------------------ */}
       {/* Final CTA                                                           */}
