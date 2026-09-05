@@ -333,7 +333,7 @@ export function ConnectedDevicesClient() {
                   <AlertTriangle className="h-5 w-5 text-destructive" />
                 </div>
                 <h3 className="mt-4 font-semibold text-foreground">
-                  Couldn't load your devices
+                  Couldn&apos;t load your devices
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {error}
@@ -425,11 +425,11 @@ export function ConnectedDevicesClient() {
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                See something you don't recognise?
+                See something you don&apos;t recognise?
               </p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Sign that device out immediately. It will have to go
-                through Cryptica's device-link approval flow again
+                through Cryptica&apos;s device-link approval flow again
                 before it can reconnect to your account.
               </p>
             </div>
