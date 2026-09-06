@@ -32,7 +32,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [hey@bytebrush.dev](mailto:hey@bytebrush.dev).
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [legal@crypticapp.org](mailto:legal@crypticapp.org).
 
 All complaints will be reviewed and investigated promptly and fairly.
 

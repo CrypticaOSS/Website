@@ -3,151 +3,298 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Custom utility for hiding scrollbars while allowing scrolling */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
+/* ==========================================================================
+   Cryptica
+   Global Design System
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Fonts
+   -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Hauora";
+  src: url("../public/fonts/Hauora-Regular.ttf");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;             /* Chrome, Safari and Opera */
+@font-face {
+  font-family: "Hauora";
+  src: url("../public/fonts/Hauora-ExtraBold.ttf");
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
 }
+
+@font-face {
+  font-family: "FluentSystemIcons-Regular";
+  src: url("../public/fonts/FluentSystemIcons-Regular.ttf");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FluentSystemIcons-Filled";
+  src: url("../public/fonts/FluentSystemIcons-Filled.ttf");
+  font-display: swap;
+}
+
+/* --------------------------------------------------------------------------
+   Light theme
+   -------------------------------------------------------------------------- */
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.26 0 0);
+  --background: oklch(0.985 0.003 255);
+  --foreground: oklch(0.205 0.018 255);
+
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.26 0 0);
+  --card-foreground: oklch(0.205 0.018 255);
+
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.26 0 0);
-  --primary: oklch(0.63 0.2 254.09);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.98 0 0);
-  --secondary-foreground: oklch(0.63 0.2 254.09);
-  --muted: oklch(0.98 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.98 0 0);
-  --accent-foreground: oklch(0.63 0.2 254.09);
-  --destructive: oklch(0.62 0.21 25.77);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.94 0 0);
-  --input: oklch(0.94 0 0);
-  --ring: oklch(0.83 0.09 248.94);
-  --chart-1: oklch(0.82 0.13 84.49);
-  --chart-2: oklch(0.8 0.11 203.6);
-  --chart-3: oklch(0.42 0.17 266.78);
-  --chart-4: oklch(0.92 0.08 125.58);
-  --chart-5: oklch(0.92 0.1 116.19);
-  --sidebar: oklch(0.99 0 0);
-  --sidebar-foreground: oklch(0.26 0 0);
-  --sidebar-primary: oklch(0.63 0.2 254.09);
+  --popover-foreground: oklch(0.205 0.018 255);
+
+  --primary: oklch(0.61 0.205 254);
+  --primary-foreground: oklch(0.99 0.003 255);
+
+  --secondary: oklch(0.965 0.012 255);
+  --secondary-foreground: oklch(0.32 0.05 255);
+
+  --muted: oklch(0.965 0.008 255);
+  --muted-foreground: oklch(0.53 0.025 255);
+
+  --accent: oklch(0.95 0.026 254);
+  --accent-foreground: oklch(0.47 0.175 254);
+
+  --destructive: oklch(0.61 0.225 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.91 0.012 255);
+  --input: oklch(0.91 0.012 255);
+  --ring: oklch(0.61 0.205 254);
+
+  --chart-1: oklch(0.61 0.205 254);
+  --chart-2: oklch(0.68 0.17 165);
+  --chart-3: oklch(0.71 0.16 75);
+  --chart-4: oklch(0.62 0.19 305);
+  --chart-5: oklch(0.64 0.2 25);
+
+  --sidebar: oklch(0.99 0.003 255);
+  --sidebar-foreground: oklch(0.205 0.018 255);
+
+  --sidebar-primary: oklch(0.61 0.205 254);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.98 0 0);
-  --sidebar-accent-foreground: oklch(0.33 0 0);
-  --sidebar-border: oklch(0.94 0 0);
-  --sidebar-ring: oklch(0.77 0 0);
+
+  --sidebar-accent: oklch(0.95 0.026 254);
+  --sidebar-accent-foreground: oklch(0.35 0.12 254);
+
+  --sidebar-border: oklch(0.91 0.012 255);
+  --sidebar-ring: oklch(0.61 0.205 254);
+
+  /* Layout */
+  --radius: 0.8rem;
+
+  /* Fonts */
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    "Hauora",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --font-serif:
+    ui-serif,
+    Georgia,
+    Cambria,
+    "Times New Roman",
+    serif;
+
   --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  --radius: 0.625rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+
+  /* Shadows */
+  --shadow-2xs:
+    0 1px 2px rgb(15 23 42 / 0.03);
+
+  --shadow-xs:
+    0 1px 3px rgb(15 23 42 / 0.05);
+
   --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 2px 8px rgb(15 23 42 / 0.04);
+
+  --shadow:
+    0 2px 8px rgb(15 23 42 / 0.05),
+    0 1px 2px rgb(15 23 42 / 0.04);
+
   --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    0 6px 18px rgb(15 23 42 / 0.07),
+    0 2px 6px rgb(15 23 42 / 0.04);
+
   --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    0 12px 32px rgb(15 23 42 / 0.09),
+    0 3px 8px rgb(15 23 42 / 0.05);
+
   --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    0 18px 45px rgb(15 23 42 / 0.11),
+    0 6px 16px rgb(15 23 42 / 0.05);
+
+  --shadow-2xl:
+    0 30px 80px rgb(15 23 42 / 0.14);
+
+  /* Cryptica */
+  --cryptica-grid: rgb(59 130 246 / 0.045);
+  --cryptica-glow: rgb(59 130 246 / 0.15);
+  --cryptica-glow-strong: rgb(59 130 246 / 0.23);
+
+  --glass-background: rgb(255 255 255 / 0.68);
+  --glass-border: rgb(255 255 255 / 0.75);
 }
 
+/* --------------------------------------------------------------------------
+   Dark theme
+   -------------------------------------------------------------------------- */
+
 .dark {
-  --background: oklch(0.14 0 285.82);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.14 0 285.82);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.14 0 285.82);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.63 0.2 254.09);
-  --primary-foreground: oklch(0.21 0.01 285.88);
-  --secondary: oklch(0.27 0.01 286.03);
-  --secondary-foreground: oklch(0.63 0.2 254.09);
-  --muted: oklch(0.27 0.01 286.03);
-  --muted-foreground: oklch(0.71 0.01 286.07);
-  --accent: oklch(0.27 0.01 286.03);
-  --accent-foreground: oklch(0.63 0.2 254.09);
-  --destructive: oklch(0.4 0.13 25.72);
-  --destructive-foreground: oklch(0.97 0.01 17.38);
-  --border: oklch(0.27 0.01 286.03);
-  --input: oklch(0.27 0.01 286.03);
-  --ring: oklch(0.43 0.14 255.2);
-  --chart-1: oklch(0.53 0.19 262.13);
-  --chart-2: oklch(0.7 0.13 165.46);
-  --chart-3: oklch(0.72 0.15 60.63);
-  --chart-4: oklch(0.62 0.2 312.73);
-  --chart-5: oklch(0.61 0.21 6.39);
-  --sidebar: oklch(0.21 0.01 285.88);
-  --sidebar-foreground: oklch(0.97 0 286.38);
-  --sidebar-primary: oklch(0.49 0.22 264.39);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.27 0.01 286.03);
-  --sidebar-accent-foreground: oklch(0.97 0 286.38);
-  --sidebar-border: oklch(0.27 0.01 286.03);
-  --sidebar-ring: oklch(0.87 0.01 286.29);
-  --radius: 0.625rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  /*
+   * Slight blue cast rather than pure charcoal.
+   * Gives Cryptica more of a premium security/product feel.
+   */
+
+  --background: oklch(0.135 0.019 260);
+  --foreground: oklch(0.965 0.006 255);
+
+  --card: oklch(0.175 0.022 260);
+  --card-foreground: oklch(0.965 0.006 255);
+
+  --popover: oklch(0.17 0.022 260);
+  --popover-foreground: oklch(0.965 0.006 255);
+
+  --primary: oklch(0.665 0.195 254);
+  --primary-foreground: oklch(0.12 0.025 260);
+
+  --secondary: oklch(0.205 0.026 260);
+  --secondary-foreground: oklch(0.91 0.012 255);
+
+  --muted: oklch(0.205 0.021 260);
+  --muted-foreground: oklch(0.68 0.025 255);
+
+  --accent: oklch(0.225 0.04 256);
+  --accent-foreground: oklch(0.78 0.13 253);
+
+  --destructive: oklch(0.58 0.205 25);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --border: oklch(0.255 0.025 260);
+  --input: oklch(0.255 0.025 260);
+  --ring: oklch(0.665 0.195 254);
+
+  --chart-1: oklch(0.665 0.195 254);
+  --chart-2: oklch(0.72 0.15 165);
+  --chart-3: oklch(0.76 0.155 75);
+  --chart-4: oklch(0.69 0.18 305);
+  --chart-5: oklch(0.67 0.19 25);
+
+  --sidebar: oklch(0.155 0.021 260);
+  --sidebar-foreground: oklch(0.95 0.008 255);
+
+  --sidebar-primary: oklch(0.665 0.195 254);
+  --sidebar-primary-foreground: oklch(0.12 0.025 260);
+
+  --sidebar-accent: oklch(0.215 0.035 256);
+  --sidebar-accent-foreground: oklch(0.92 0.015 255);
+
+  --sidebar-border: oklch(0.255 0.025 260);
+  --sidebar-ring: oklch(0.665 0.195 254);
+
+  --shadow-2xs:
+    0 1px 2px rgb(0 0 0 / 0.12);
+
+  --shadow-xs:
+    0 1px 3px rgb(0 0 0 / 0.14);
+
   --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    0 2px 8px rgb(0 0 0 / 0.16);
+
+  --shadow:
+    0 3px 12px rgb(0 0 0 / 0.18);
+
   --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    0 8px 24px rgb(0 0 0 / 0.22);
+
   --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    0 14px 36px rgb(0 0 0 / 0.25);
+
   --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    0 20px 55px rgb(0 0 0 / 0.3);
+
+  --shadow-2xl:
+    0 35px 90px rgb(0 0 0 / 0.4);
+
+  --cryptica-grid: rgb(96 165 250 / 0.035);
+  --cryptica-glow: rgb(59 130 246 / 0.12);
+  --cryptica-glow-strong: rgb(59 130 246 / 0.2);
+
+  --glass-background: rgb(18 24 38 / 0.64);
+  --glass-border: rgb(255 255 255 / 0.07);
 }
+
+/* --------------------------------------------------------------------------
+   Tailwind theme
+   -------------------------------------------------------------------------- */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
@@ -155,10 +302,12 @@
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-3xl: calc(var(--radius) + 16px);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -170,42 +319,581 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--background);
+  }
+
   body {
-    @apply bg-background text-foreground min-h-screen;
+    @apply min-h-screen bg-background text-foreground;
+
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: color-mix(
+      in oklch,
+      var(--primary) 28%,
+      transparent
+    );
+
+    color: var(--foreground);
   }
 }
 
-@font-face {
-  font-family: "Hauora";
-  src: url(../public/fonts/Hauora-Regular.ttf);
+/* ==========================================================================
+   Global background
+   ========================================================================== */
+
+body {
+  position: relative;
+  isolation: isolate;
 }
 
-@font-face {
-  font-family: "Hauora";
-  src: url(../public/fonts/Hauora-ExtraBold.ttf);
-  font-weight: bold;
+/*
+ * Very subtle page-wide gradient.
+ *
+ * Unlike a huge neon glow this gives the site depth without screaming
+ * "AI startup landing page".
+ */
+body::before {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 8% -10%,
+      var(--cryptica-glow-strong),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 92% 6%,
+      var(--cryptica-glow),
+      transparent 28rem
+    );
+
+  opacity: 0.8;
 }
 
-@font-face {
-  font-family: "FluentSystemIcons-Regular";
-  src: url(../public/fonts/FluentSystemIcons-Regular.ttf);
+/* Tiny background grid */
+body::after {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(
+      to right,
+      var(--cryptica-grid) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      var(--cryptica-grid) 1px,
+      transparent 1px
+    );
+
+  background-size: 64px 64px;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 75%
+    );
+
+  opacity: 0.65;
 }
 
-@font-face {
-  font-family: "FluentSystemIcons-Filled";
-  src: url(../public/fonts/FluentSystemIcons-Filled.ttf);
+/* ==========================================================================
+   Scrollbars
+   ========================================================================== */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in oklch, var(--muted-foreground) 35%, transparent)
+    transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+
+  background:
+    color-mix(
+      in oklch,
+      var(--muted-foreground) 30%,
+      transparent
+    );
+
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background:
+    color-mix(
+      in oklch,
+      var(--muted-foreground) 48%,
+      transparent
+    );
+
+  background-clip: padding-box;
+}
+
+/* Continuously scrolls the duplicated testimonial track. */
+@keyframes testimonial-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 0.5rem));
+  }
+}
+
+.testimonial-marquee {
+  animation: testimonial-marquee 42s linear infinite;
+}
+
+.testimonial-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-marquee {
+    animation-play-state: paused;
+  }
+}
+
+/* ==========================================================================
+   Icons
+   ========================================================================== */
 
 .icon {
   font-family: "FluentSystemIcons-Regular";
+  font-style: normal;
+  font-weight: normal;
 }
 
 .icon-f {
   font-family: "FluentSystemIcons-Filled";
+  font-style: normal;
+  font-weight: normal;
+}
+
+/* ==========================================================================
+   Cryptica utilities
+   ========================================================================== */
+
+@layer utilities {
+  /* ------------------------------------------------------------------------
+     Glass
+     ------------------------------------------------------------------------ */
+
+  .glass {
+    border: 1px solid var(--glass-border);
+
+    background: var(--glass-background);
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      var(--shadow-lg);
+
+    backdrop-filter:
+      blur(20px)
+      saturate(140%);
+
+    -webkit-backdrop-filter:
+      blur(20px)
+      saturate(140%);
+  }
+
+  .glass-subtle {
+    border: 1px solid
+      color-mix(
+        in oklch,
+        var(--border) 76%,
+        transparent
+      );
+
+    background:
+      color-mix(
+        in oklch,
+        var(--card) 72%,
+        transparent
+      );
+
+    backdrop-filter:
+      blur(14px)
+      saturate(125%);
+
+    -webkit-backdrop-filter:
+      blur(14px)
+      saturate(125%);
+  }
+
+  /* ------------------------------------------------------------------------
+     Cards
+     ------------------------------------------------------------------------ */
+
+  .cryptica-card {
+    position: relative;
+    overflow: hidden;
+
+    border: 1px solid
+      color-mix(
+        in oklch,
+        var(--border) 85%,
+        transparent
+      );
+
+    border-radius: calc(var(--radius) + 8px);
+
+    background:
+      color-mix(
+        in oklch,
+        var(--card) 94%,
+        transparent
+      );
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.035),
+      var(--shadow-sm);
+
+    transition:
+      transform 220ms ease,
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      background-color 220ms ease;
+  }
+
+  .cryptica-card:hover {
+    transform: translateY(-3px);
+
+    border-color:
+      color-mix(
+        in oklch,
+        var(--primary) 28%,
+        var(--border)
+      );
+
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      var(--shadow-xl);
+  }
+
+  .cryptica-card::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+      linear-gradient(
+        145deg,
+        color-mix(
+          in oklch,
+          var(--primary) 6%,
+          transparent
+        ),
+        transparent 42%
+      );
+
+    opacity: 0;
+
+    transition: opacity 220ms ease;
+  }
+
+  .cryptica-card:hover::before {
+    opacity: 1;
+  }
+
+  /* ------------------------------------------------------------------------
+     Gradient text
+     ------------------------------------------------------------------------ */
+
+  .text-gradient-primary {
+    color: transparent;
+
+    background:
+      linear-gradient(
+        110deg,
+        var(--primary),
+        color-mix(
+          in oklch,
+          var(--primary) 62%,
+          white
+        )
+      );
+
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+
+  /* ------------------------------------------------------------------------
+     Primary glow
+     ------------------------------------------------------------------------ */
+
+  .shadow-primary {
+    box-shadow:
+      0 10px 35px
+      color-mix(
+        in oklch,
+        var(--primary) 18%,
+        transparent
+      );
+  }
+
+  .shadow-primary-lg {
+    box-shadow:
+      0 18px 65px
+      color-mix(
+        in oklch,
+        var(--primary) 22%,
+        transparent
+      );
+  }
+
+  /* ------------------------------------------------------------------------
+     Hero backgrounds
+     ------------------------------------------------------------------------ */
+
+  .cryptica-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .cryptica-hero::before {
+    content: "";
+
+    position: absolute;
+
+    width: 58rem;
+    height: 58rem;
+
+    left: 50%;
+    top: -42rem;
+
+    z-index: -1;
+
+    transform: translateX(-50%);
+
+    border-radius: 9999px;
+
+    background:
+      color-mix(
+        in oklch,
+        var(--primary) 15%,
+        transparent
+      );
+
+    filter: blur(90px);
+
+    pointer-events: none;
+  }
+
+  .cryptica-hero::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    z-index: -2;
+
+    pointer-events: none;
+
+    background:
+      linear-gradient(
+        to bottom,
+        transparent,
+        color-mix(
+          in oklch,
+          var(--muted) 28%,
+          transparent
+        )
+      );
+  }
+
+  /* ------------------------------------------------------------------------
+     Section heading eyebrow
+     ------------------------------------------------------------------------ */
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+
+    font-size: 0.8rem;
+    line-height: 1rem;
+    font-weight: 700;
+
+    letter-spacing: 0.04em;
+
+    color: var(--primary);
+  }
+
+  /* ------------------------------------------------------------------------
+     Interactive shine
+     ------------------------------------------------------------------------ */
+
+  .interactive-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .interactive-shine::after {
+    content: "";
+
+    position: absolute;
+    top: -50%;
+    bottom: -50%;
+
+    width: 45%;
+
+    left: -75%;
+
+    pointer-events: none;
+
+    transform: rotate(15deg);
+
+    background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgb(255 255 255 / 0.08),
+        transparent
+      );
+
+    transition: left 550ms ease;
+  }
+
+  .interactive-shine:hover::after {
+    left: 135%;
+  }
+
+  /* ------------------------------------------------------------------------
+     Decorative divider
+     ------------------------------------------------------------------------ */
+
+  .gradient-divider {
+    height: 1px;
+
+    background:
+      linear-gradient(
+        90deg,
+        transparent,
+        color-mix(
+          in oklch,
+          var(--primary) 40%,
+          transparent
+        ),
+        transparent
+      );
+  }
+}
+
+/* ==========================================================================
+   Components / generic element polish
+   ========================================================================== */
+
+/*
+ * Gives common shadcn form controls a slightly nicer transition without
+ * requiring every component to repeat it.
+ */
+
+input,
+textarea,
+select {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+/* Links inherit colour by default */
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Images don't accidentally overflow cards */
+img,
+svg {
+  max-width: 100%;
+}
+
+/* ==========================================================================
+   Existing project layout
+   ========================================================================== */
+
+.h-scroll {
+  height: var(--content-h);
 }
 
 @media (min-width: 48rem) {
@@ -214,17 +902,29 @@
   }
 }
 
-body {
-  font-family: "Hauora", sans-serif;
-  min-height: 100vh;
-}
-
-.h-scroll {
-  height: var(--content-h);
-}
-
 @media (min-width: 768px) {
   .md\:h-scroll {
     height: var(--content-h);
+  }
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
   }
 }

@@ -1,239 +1,1543 @@
 "use client"
 
-import { useState } from "react"
-import { useVault } from "@/hooks/use-vault"
-import { useTranslations } from "next-intl"
 import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
+
+import {
+  AlertTriangle,
+  Check,
+  Copy,
   Eye,
   EyeOff,
-  Folder,
-  Key,
-  Lock,
   FileText,
-  User,
-  Globe,
+  Globe2,
+  KeyRound,
+  Loader2,
+  LockKeyhole,
+  Pencil,
   Plus,
-  Trash2
+  Save,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UserRound,
+  X,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+
+import {
+  Button,
+} from "@/components/ui/button"
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+import {
+  Input,
+} from "@/components/ui/input"
+
+import {
+  Label,
+} from "@/components/ui/label"
+
+import {
+  Textarea,
+} from "@/components/ui/textarea"
+
+type VaultEntry = {
+  id: string
+  service: string
+  username: string
+  password: string
+  notes: string
+
+  favorite: boolean
+
+  createdAt: string
+  updatedAt: string
+}
+
+type VaultForm = {
+  service: string
+  username: string
+  password: string
+  notes: string
+}
+
+const EMPTY_FORM:
+  VaultForm = {
+    service: "",
+    username: "",
+    password: "",
+    notes: "",
+  }
 
 export default function VaultPage() {
-  const t = useTranslations()
-  const { vault, addEntry, deleteEntry } = useVault()
-  const [showPasswordId, setShowPasswordId] = useState<string | null>(null)
-  const [form, setForm] = useState({ service: "", username: "", password: "", notes: "" })
+  const [
+    entries,
+    setEntries,
+  ] =
+    useState<VaultEntry[]>(
+      [],
+    )
 
-  function handleAdd(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.service || !form.password) return
-    addEntry(form)
-    setForm({ service: "", username: "", password: "", notes: "" })
+  const [
+    form,
+    setForm,
+  ] =
+    useState<VaultForm>(
+      EMPTY_FORM,
+    )
+
+  const [
+    search,
+    setSearch,
+  ] =
+    useState("")
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(true)
+
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false)
+
+  const [
+    error,
+    setError,
+  ] =
+    useState<string | null>(
+      null,
+    )
+
+  const [
+    showNewPassword,
+    setShowNewPassword,
+  ] =
+    useState(false)
+
+  const [
+    visiblePasswords,
+    setVisiblePasswords,
+  ] =
+    useState<
+      Set<string>
+    >(
+      new Set(),
+    )
+
+  const [
+    copiedId,
+    setCopiedId,
+  ] =
+    useState<string | null>(
+      null,
+    )
+
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] =
+    useState<VaultEntry | null>(
+      null,
+    )
+
+  const [
+    deleting,
+    setDeleting,
+  ] =
+    useState(false)
+
+  const [
+    editTarget,
+    setEditTarget,
+  ] =
+    useState<VaultEntry | null>(
+      null,
+    )
+
+  const [
+    editForm,
+    setEditForm,
+  ] =
+    useState<VaultForm>(
+      EMPTY_FORM,
+    )
+
+  const [
+    editing,
+    setEditing,
+  ] =
+    useState(false)
+
+  const [
+    showEditPassword,
+    setShowEditPassword,
+  ] =
+    useState(false)
+
+  const loadVault =
+    useCallback(
+      async () => {
+        setLoading(true)
+        setError(null)
+
+        try {
+          const response =
+            await fetch(
+              "/api/vault",
+              {
+                method:
+                  "GET",
+
+                credentials:
+                  "include",
+
+                cache:
+                  "no-store",
+              },
+            )
+
+          const data =
+            await response.json()
+
+          if (
+            response.status ===
+            401
+          ) {
+            window.location.href =
+              "/login?callbackUrl=/vault"
+
+            return
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              data.error ??
+                "Unable to load your vault.",
+            )
+          }
+
+          setEntries(
+            data.entries ??
+              [],
+          )
+        } catch (
+          caughtError
+        ) {
+          const message =
+            caughtError instanceof
+            Error
+              ? caughtError.message
+              : "Unable to load your vault."
+
+          setError(message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      [],
+    )
+
+  useEffect(() => {
+    void loadVault()
+  }, [loadVault])
+
+  const filteredEntries =
+    useMemo(() => {
+      const query =
+        search
+          .trim()
+          .toLowerCase()
+
+      if (!query) {
+        return entries
+      }
+
+      return entries.filter(
+        (entry) =>
+          entry.service
+            .toLowerCase()
+            .includes(
+              query,
+            ) ||
+          entry.username
+            .toLowerCase()
+            .includes(
+              query,
+            ),
+      )
+    }, [
+      entries,
+      search,
+    ])
+
+  function updateForm<
+    K extends keyof VaultForm,
+  >(
+    key: K,
+    value: VaultForm[K],
+  ) {
+    setForm(
+      (current) => ({
+        ...current,
+        [key]: value,
+      }),
+    )
+  }
+
+  function generatePassword(
+    length = 24,
+  ) {
+    const alphabet =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+"
+
+    const bytes =
+      new Uint32Array(
+        length,
+      )
+
+    window.crypto.getRandomValues(
+      bytes,
+    )
+
+    return Array.from(
+      bytes,
+      (value) =>
+        alphabet[
+          value %
+            alphabet.length
+        ],
+    ).join("")
+  }
+
+  function generateNewPassword() {
+    updateForm(
+      "password",
+      generatePassword(),
+    )
+
+    setShowNewPassword(
+      true,
+    )
+
+    toast.success(
+      "Secure password generated.",
+    )
+  }
+
+  function openEdit(
+    entry: VaultEntry,
+  ) {
+    setEditTarget(
+      entry,
+    )
+
+    setEditForm({
+      service:
+        entry.service,
+
+      username:
+        entry.username,
+
+      password:
+        entry.password,
+
+      notes:
+        entry.notes,
+    })
+
+    setShowEditPassword(
+      false,
+    )
+  }
+
+  function updateEditForm<
+    K extends keyof VaultForm,
+  >(
+    key: K,
+    value: VaultForm[K],
+  ) {
+    setEditForm(
+      (current) => ({
+        ...current,
+        [key]: value,
+      }),
+    )
+  }
+
+  function generateEditPassword() {
+    updateEditForm(
+      "password",
+      generatePassword(),
+    )
+
+    setShowEditPassword(
+      true,
+    )
+
+    toast.success(
+      "Secure password generated.",
+    )
+  }
+
+  async function handleEdit(
+    event:
+      FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    if (
+      !editTarget
+    ) {
+      return
+    }
+
+    if (
+      !editForm.service.trim() ||
+      !editForm.password
+    ) {
+      toast.error(
+        "Service and password are required.",
+      )
+
+      return
+    }
+
+    setEditing(
+      true,
+    )
+
+    try {
+      const response =
+        await fetch(
+          `/api/vault/${editTarget.id}`,
+          {
+            method:
+              "PATCH",
+
+            credentials:
+              "include",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(
+                editForm,
+              ),
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/login?callbackUrl=/vault"
+
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to update password.",
+        )
+      }
+
+      setEntries(
+        (current) =>
+          current.map(
+            (entry) =>
+              entry.id ===
+              editTarget.id
+                ? data.entry
+                : entry,
+          ),
+      )
+
+      setEditTarget(
+        null,
+      )
+
+      setEditForm(
+        EMPTY_FORM,
+      )
+
+      toast.success(
+        "Vault entry updated.",
+      )
+    } catch (
+      caughtError
+    ) {
+      toast.error(
+        caughtError instanceof
+          Error
+          ? caughtError.message
+          : "Unable to update password.",
+      )
+    } finally {
+      setEditing(
+        false,
+      )
+    }
+  }
+
+  async function handleAdd(
+    event:
+      FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    if (
+      !form.service.trim() ||
+      !form.password
+    ) {
+      toast.error(
+        "Service and password are required.",
+      )
+
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const response =
+        await fetch(
+          "/api/vault",
+          {
+            method:
+              "POST",
+
+            credentials:
+              "include",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(
+                form,
+              ),
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/login?callbackUrl=/vault"
+
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to save password.",
+        )
+      }
+
+      setEntries(
+        (current) => [
+          data.entry,
+          ...current,
+        ],
+      )
+
+      setForm(
+        EMPTY_FORM,
+      )
+
+      setShowNewPassword(
+        false,
+      )
+
+      toast.success(
+        "Password added to your vault.",
+      )
+    } catch (
+      caughtError
+    ) {
+      toast.error(
+        caughtError instanceof
+          Error
+          ? caughtError.message
+          : "Unable to save password.",
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      !deleteTarget
+    ) {
+      return
+    }
+
+    setDeleting(true)
+
+    try {
+      const response =
+        await fetch(
+          `/api/vault/${deleteTarget.id}`,
+          {
+            method:
+              "DELETE",
+
+            credentials:
+              "include",
+          },
+        )
+
+      const data =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Unable to delete password.",
+        )
+      }
+
+      setEntries(
+        (current) =>
+          current.filter(
+            (entry) =>
+              entry.id !==
+              deleteTarget.id,
+          ),
+      )
+
+      toast.success(
+        `${deleteTarget.service} removed from your vault.`,
+      )
+
+      setDeleteTarget(
+        null,
+      )
+    } catch (
+      caughtError
+    ) {
+      toast.error(
+        caughtError instanceof
+          Error
+          ? caughtError.message
+          : "Unable to delete password.",
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  function togglePassword(
+    id: string,
+  ) {
+    setVisiblePasswords(
+      (current) => {
+        const next =
+          new Set(current)
+
+        if (
+          next.has(id)
+        ) {
+          next.delete(id)
+        } else {
+          next.add(id)
+        }
+
+        return next
+      },
+    )
+  }
+
+  async function copyPassword(
+    entry: VaultEntry,
+  ) {
+    try {
+      await navigator.clipboard.writeText(
+        entry.password,
+      )
+
+      setCopiedId(
+        entry.id,
+      )
+
+      toast.success(
+        "Password copied.",
+      )
+
+      window.setTimeout(
+        () => {
+          setCopiedId(
+            (current) =>
+              current ===
+              entry.id
+                ? null
+                : current,
+          )
+        },
+        1800,
+      )
+    } catch {
+      toast.error(
+        "Unable to copy password.",
+      )
+    }
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-6 flex items-center space-x-2">
-        <div className="bg-gradient-to-br from-blue-500 to-purple-500 rounded-full p-1.5">
-          <Lock className="h-5 w-5 text-white" />
-        </div>
-        <p className="ml-2 text-xl font-bold">{t("password-vault")}</p>
-      </div>
+    <>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-2xl border bg-card px-6 py-7 shadow-sm sm:px-8">
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent" />
 
-      <Card className="mb-8 shadow-lg border-0 bg-card/50 backdrop-blur-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-xl"></div>
-        <CardHeader className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-primary/80 to-blue-500/80 rounded-full p-1.5">
-              <Key className="h-5 w-5 text-white" />
+          <div className="pointer-events-none absolute -right-24 -top-28 size-72 rounded-full bg-primary/10 blur-3xl" />
+
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                <ShieldCheck className="size-3.5 text-primary" />
+
+                Encrypted password vault
+              </div>
+
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Your vault
+              </h1>
+
+              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+                Keep account credentials organised and encrypted in one place.
+                Your saved entries are protected before they are written to
+                the database.
+              </p>
             </div>
-            <CardTitle className="text-2xl">{t("add-new-password")}</CardTitle>
+
+            <div className="flex items-center gap-3 rounded-xl border bg-background/50 px-4 py-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                <LockKeyhole className="size-5 text-primary" />
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold">
+                  {entries.length} saved
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  Encrypted vault items
+                </p>
+              </div>
+            </div>
           </div>
-          <CardDescription className="text-base">{t("vault-desc") || "Store your passwords securely in your browser"}</CardDescription>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          <form className="grid gap-5" onSubmit={handleAdd} autoComplete="off">
-            <div className="space-y-2">
-              <Label htmlFor="service" className="text-sm font-medium">{t("service")}</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                  <Globe className="h-5 w-5" />
-                </div>
-                <Input
-                  id="service"
-                  placeholder={t("service") + " (e.g. Gmail)"}
-                  value={form.service}
-                  onChange={e => setForm(f => ({ ...f, service: e.target.value }))}
-                  autoComplete="off"
-                  required
-                  className="pl-10 h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30"
-                />
-              </div>
-            </div>
+        </section>
 
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">{t("username")} <span className="text-xs text-muted-foreground">({t("optional").toLowerCase()})</span></Label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                  <User className="h-5 w-5" />
-                </div>
-                <Input
-                  id="username"
-                  placeholder={t("username")}
-                  value={form.username}
-                  onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                  autoComplete="off"
-                  className="pl-10 h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">{t("password")}</Label>
-              <div className="relative flex gap-2">
-                <div className="relative flex-grow">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                    <Key className="h-5 w-5" />
+        <div className="mt-6 grid gap-6 lg:grid-cols-[390px_minmax(0,1fr)]">
+          {/* Add password */}
+          <aside>
+            <div className="sticky top-6 overflow-hidden rounded-2xl border bg-card shadow-sm">
+              <div className="border-b px-5 py-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <Plus className="size-5 text-primary" />
                   </div>
+
+                  <div>
+                    <h2 className="font-semibold">
+                      Add a login
+                    </h2>
+
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                      Save another account to your encrypted vault.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form
+                onSubmit={
+                  handleAdd
+                }
+                autoComplete="off"
+                className="space-y-5 p-5"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="service">
+                    Service
+                  </Label>
+
+                  <div className="relative">
+                    <Globe2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+                    <Input
+                      id="service"
+                      value={
+                        form.service
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        updateForm(
+                          "service",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="e.g. GitHub"
+                      className="h-11 pl-9"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="username">
+                    Username or email
+                  </Label>
+
+                  <div className="relative">
+                    <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+                    <Input
+                      id="username"
+                      value={
+                        form.username
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        updateForm(
+                          "username",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="name@example.com"
+                      className="h-11 pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">
+                      Password
+                    </Label>
+
+                    <button
+                      type="button"
+                      onClick={
+                        generateNewPassword
+                      }
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      <Sparkles className="size-3" />
+
+                      Generate
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+                    <Input
+                      id="password"
+                      type={
+                        showNewPassword
+                          ? "text"
+                          : "password"
+                      }
+                      value={
+                        form.password
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        updateForm(
+                          "password",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Enter a password"
+                      className="h-11 px-9 font-mono"
+                      autoComplete="new-password"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowNewPassword(
+                          (current) =>
+                            !current,
+                        )
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label={
+                        showNewPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">
+                    Notes
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      optional
+                    </span>
+                  </Label>
+
+                  <Textarea
+                    id="notes"
+                    value={
+                      form.notes
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      updateForm(
+                        "notes",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Recovery information, account details..."
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={
+                    saving
+                  }
+                  className="h-11 w-full"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Encrypting and saving...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="size-4" />
+                      Add to vault
+                    </>
+                  )}
+                </Button>
+
+                <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+
+                  Password contents are encrypted before being stored in
+                  PostgreSQL.
+                </div>
+              </form>
+            </div>
+          </aside>
+
+          {/* Password list */}
+          <section className="min-w-0">
+            <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  Saved logins
+                </h2>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Search and manage your saved credentials.
+                </p>
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+                <Input
+                  value={
+                    search
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setSearch(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Search your vault..."
+                  className="pl-9"
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex min-h-72 items-center justify-center rounded-2xl border bg-card">
+                <div className="text-center">
+                  <Loader2 className="mx-auto size-6 animate-spin text-primary" />
+
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Unlocking your vault...
+                  </p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center">
+                <AlertTriangle className="mx-auto size-8 text-destructive" />
+
+                <h3 className="mt-4 font-semibold">
+                  Couldn&apos;t load your vault
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                  {error}
+                </p>
+
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    void loadVault()
+                  }
+                  className="mt-5"
+                >
+                  Try again
+                </Button>
+              </div>
+            ) : filteredEntries.length ===
+              0 ? (
+              <div className="rounded-2xl border border-dashed bg-card/50 px-6 py-16 text-center">
+                <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+                  <LockKeyhole className="size-6 text-primary" />
+                </div>
+
+                <h3 className="mt-5 font-semibold">
+                  {search
+                    ? "No matching passwords"
+                    : "Your vault is empty"}
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+                  {search
+                    ? "Try searching with another service, username or email address."
+                    : "Save your first login using the form beside your vault."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredEntries.map(
+                  (entry) => {
+                    const visible =
+                      visiblePasswords.has(
+                        entry.id,
+                      )
+
+                    const copied =
+                      copiedId ===
+                      entry.id
+
+                    return (
+                      <article
+                        key={
+                          entry.id
+                        }
+                        className="group overflow-hidden rounded-2xl border bg-card transition-colors hover:border-primary/20"
+                      >
+                        <div className="flex items-start justify-between gap-4 border-b bg-muted/15 px-5 py-4">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background">
+                              <Globe2 className="size-4 text-primary" />
+                            </div>
+
+                            <div className="min-w-0">
+                              <h3 className="truncate font-semibold">
+                                {
+                                  entry.service
+                                }
+                              </h3>
+
+                              {entry.username ? (
+                                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <UserRound className="size-3" />
+
+                                  <span className="truncate">
+                                    {
+                                      entry.username
+                                    }
+                                  </span>
+                                </div>
+                              ) : (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  No username saved
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                openEdit(
+                                  entry,
+                                )
+                              }
+                              className="size-8 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                              aria-label={`Edit ${entry.service}`}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                setDeleteTarget(
+                                  entry,
+                                )
+                              }
+                              className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Delete ${entry.service}`}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 p-5">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">
+                              Password
+                            </Label>
+
+                            <div className="mt-2 flex gap-2">
+                              <div className="relative min-w-0 flex-1">
+                                <Input
+                                  readOnly
+                                  type={
+                                    visible
+                                      ? "text"
+                                      : "password"
+                                  }
+                                  value={
+                                    entry.password
+                                  }
+                                  className="h-10 pr-10 font-mono"
+                                />
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    togglePassword(
+                                      entry.id,
+                                    )
+                                  }
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                  {visible ? (
+                                    <EyeOff className="size-4" />
+                                  ) : (
+                                    <Eye className="size-4" />
+                                  )}
+                                </button>
+                              </div>
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  void copyPassword(
+                                    entry,
+                                  )
+                                }
+                                className="size-10 shrink-0"
+                              >
+                                {copied ? (
+                                  <Check className="size-4 text-emerald-500" />
+                                ) : (
+                                  <Copy className="size-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {entry.notes && (
+                            <div className="rounded-xl bg-muted/35 p-3">
+                              <div className="flex gap-2">
+                                <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+
+                                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
+                                  {
+                                    entry.notes
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between border-t pt-3 text-[11px] text-muted-foreground">
+                            <span>
+                              Updated{" "}
+                              {new Date(
+                                entry.updatedAt,
+                              ).toLocaleDateString()}
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                              <ShieldCheck className="size-3 text-primary" />
+
+                              Encrypted
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  },
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+
+      <Dialog
+        open={
+          Boolean(
+            editTarget,
+          )
+        }
+        onOpenChange={(
+          open,
+        ) => {
+          if (
+            !open &&
+            !editing
+          ) {
+            setEditTarget(
+              null,
+            )
+
+            setEditForm(
+              EMPTY_FORM,
+            )
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <form
+            onSubmit={
+              handleEdit
+            }
+          >
+            <DialogHeader>
+              <DialogTitle>
+                Edit vault entry
+              </DialogTitle>
+
+              <DialogDescription>
+                Update this login. The new contents will be encrypted before they are saved.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-5 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-service">
+                  Service
+                </Label>
+
+                <Input
+                  id="edit-service"
+                  value={
+                    editForm.service
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    updateEditForm(
+                      "service",
+                      event.target.value,
+                    )
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-username">
+                  Username or email
+                </Label>
+
+                <Input
+                  id="edit-username"
+                  value={
+                    editForm.username
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    updateEditForm(
+                      "username",
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="edit-password">
+                    Password
+                  </Label>
+
+                  <button
+                    type="button"
+                    onClick={
+                      generateEditPassword
+                    }
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <Sparkles className="size-3" />
+
+                    Generate
+                  </button>
+                </div>
+
+                <div className="relative">
                   <Input
-                    id="password"
-                    placeholder={t("password")}
-                    type={showPasswordId === "new" ? "text" : "password"}
-                    value={form.password}
-                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    id="edit-password"
+                    type={
+                      showEditPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={
+                      editForm.password
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      updateEditForm(
+                        "password",
+                        event.target.value,
+                      )
+                    }
+                    className="pr-10 font-mono"
                     autoComplete="new-password"
                     required
-                    className="pl-10 pr-12 h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30"
                   />
-                  <Button
+
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPasswordId(showPasswordId === "new" ? null : "new")}
+                    onClick={() =>
+                      setShowEditPassword(
+                        (current) =>
+                          !current,
+                      )
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={
+                      showEditPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
                   >
-                    {showPasswordId === "new" ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </Button>
+                    {showEditPassword ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes" className="text-sm font-medium">{t("notes")} <span className="text-xs text-muted-foreground">({t("optional").toLowerCase()})</span></Label>
-              <div className="relative">
-                <div className="absolute left-3 top-3 text-muted-foreground">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <Input
-                  id="notes"
-                  placeholder={t("notes")}
-                  value={form.notes}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  autoComplete="off"
-                  className="pl-10 h-12 bg-background/80 backdrop-blur-sm border-primary/10 focus:border-primary/30"
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">
+                  Notes
+                </Label>
+
+                <Textarea
+                  id="edit-notes"
+                  value={
+                    editForm.notes
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    updateEditForm(
+                      "notes",
+                      event.target.value,
+                    )
+                  }
+                  rows={4}
+                  className="resize-none"
                 />
               </div>
             </div>
-          </form>
-        </CardContent>
-        <CardFooter className="pt-2 pb-6 relative z-10">
-          <Button
-            type="submit"
-            onClick={handleAdd}
-            className="flex w-full items-center justify-center gap-2 py-6 text-base relative overflow-hidden group"
-            size="lg"
-          >
-            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500 via-primary to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-            <Plus className="h-5 w-5 relative z-10" />
-            <span className="relative z-10">{t("add")}</span>
-          </Button>
-        </CardFooter>
-      </Card>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className="bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full p-1.5">
-            <Folder className="h-5 w-5 text-white" />
-          </div>
-          <h2 className="text-xl font-bold">{t("saved-passwords")}</h2>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {vault.length} {vault.length === 1 ? t("password") : t("passwords")}
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {vault.length === 0 && (
-          <div className="bg-card/30 backdrop-blur-sm rounded-xl p-8 text-center border border-primary/10">
-            <div className="mx-auto bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center mb-4">
-              <Lock className="h-8 w-8 text-primary/50" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">{t("no-passwords-saved")}</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {t("vault-empty-message") || "Add passwords to your vault to keep them secure and easily accessible."}
-            </p>
-          </div>
-        )}
-
-        {vault.map(entry => (
-          <Card key={entry.id} className="overflow-hidden border-0 bg-card/50 backdrop-blur-sm shadow-md hover:shadow-lg transition-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5 rounded-xl"></div>
-            <CardHeader className="flex flex-row items-center justify-between relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-indigo-500/80 to-blue-500/80 h-10 w-10 rounded-full flex items-center justify-center">
-                  <Globe className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle>{entry.service}</CardTitle>
-                  {entry.username && <div className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <User className="h-4 w-4" />
-                    {entry.username}
-                  </div>}
-                </div>
-              </div>
+            <DialogFooter className="mt-6">
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => deleteEntry(entry.id)}
+                type="button"
+                variant="outline"
+                disabled={
+                  editing
+                }
+                onClick={() => {
+                  setEditTarget(
+                    null,
+                  )
+
+                  setEditForm(
+                    EMPTY_FORM,
+                  )
+                }}
               >
-                <Trash2 className="w-4 h-4" />
+                Cancel
               </Button>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-grow">
-                  <Input
-                    type={showPasswordId === entry.id ? "text" : "password"}
-                    value={entry.password}
-                    readOnly
-                    autoComplete="off"
-                    className="font-mono bg-background/80 border-primary/10 pr-12 h-12"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPasswordId(showPasswordId === entry.id ? null : entry.id)}
-                  >
-                    {showPasswordId === entry.id ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </Button>
-                </div>
-              </div>
-              {entry.notes && (
-                <div className="mt-4 text-sm bg-background/50 border border-primary/5 rounded-md p-3 flex items-start gap-2">
-                  <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <div>{entry.notes}</div>
-                </div>
+
+              <Button
+                type="submit"
+                disabled={
+                  editing
+                }
+              >
+                {editing ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    Save changes
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={
+          Boolean(
+            deleteTarget,
+          )
+        }
+        onOpenChange={(
+          open,
+        ) => {
+          if (
+            !open &&
+            !deleting
+          ) {
+            setDeleteTarget(
+              null,
+            )
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Delete password?
+            </DialogTitle>
+
+            <DialogDescription>
+              {deleteTarget
+                ? `${deleteTarget.service} will be removed from your vault.`
+                : "This password will be removed from your vault."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={
+                deleting
+              }
+              onClick={() =>
+                setDeleteTarget(
+                  null,
+                )
+              }
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              disabled={
+                deleting
+              }
+              onClick={() =>
+                void handleDelete()
+              }
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Delete password
+                </>
               )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

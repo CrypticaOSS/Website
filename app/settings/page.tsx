@@ -780,7 +780,7 @@ export default function SettingsPage() {
                   </p>
                   <p>
                     Cryptica - AGPL 3.0 - © {new Date().getFullYear()}{" "}
-                    ByteBrush Studios
+                    Cryptica
                   </p>
                 </div>
               </div>

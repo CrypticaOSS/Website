@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Default Layout with `Metadata` for all pages.
 - Husky and commitlint usage for code maintenance.
 - Password Vault feature for saving passwords locally with service name, username, and notes.
-- Legal pages (Terms of Service, Privacy Policy, About Us, Contact) with ByteBrush Studios branding.
+- Legal pages (Terms of Service, Privacy Policy, About Us, Contact) with Cryptica branding.
 - Error and Not Found (404) pages with proper error handling.
 - Security improvement: disabled browser autofill for password vault inputs.
 - Internationalization support for all new features (English and French).
