@@ -9,7 +9,7 @@ import {
 const managers = [
   {
     name: "Connor",
-    role: "Manager & Developer",
+    role: "Owner & Developer",
     avatar: "/profiles/connor.png",
   },
   {
@@ -280,13 +280,13 @@ export default function TeamSection() {
           </div>
         </div>
 
-        <div className="border-t border-border/60 pt-8">
+        <div className="space-y-12 border-t border-border/60 pt-8">
           <TeamGroup
             title="Management"
             description="Leading the development, direction and day-to-day operation of Cryptica."
             members={managers}
           />
-           <TeamGroup
+          <TeamGroup
             title="Developers"
             description="Building and maintaining the core technology behind Cryptica."
             members={developers}
