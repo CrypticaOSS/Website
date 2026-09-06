@@ -394,5 +394,3 @@ ignored/
 ignored/**
 
 package-lock.json
-
-bun.lock
