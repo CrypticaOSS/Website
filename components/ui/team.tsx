@@ -24,6 +24,14 @@ const managers = [
   },
 ]
 
+const developers = [
+  {
+    name: "Rizon",
+    role: "Developer",
+    avatar: "/profiles/rizon.png",
+  },
+]
+
 type TeamMember = {
   name: string
   role: string
@@ -277,6 +285,11 @@ export default function TeamSection() {
             title="Management"
             description="Leading the development, direction and day-to-day operation of Cryptica."
             members={managers}
+          />
+           <TeamGroup
+            title="Developers"
+            description="Building and maintaining the core technology behind Cryptica."
+            members={developers}
           />
         </div>
       </div>
